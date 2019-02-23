@@ -10,9 +10,9 @@ class GridWorld:
         # o   o
         # S   o
 
-        self.x_lim = 3
-        self.y_lim = 3
-        self.act_lim = 4
+        self.x_lim = 4
+        self.y_lim = 4
+        self.act_lim = 3
 
         # Start position
         self.x_start = 0
@@ -33,41 +33,45 @@ class GridWorld:
         }
         # (U, D, R, L, T)
         self.initial_grid = {
-            (0, 0): (1, 0, 1, 0, 0),
-            (0, 1): (0, 1, 1, 0, 0),
-            (0, 2): (0, 0, 1, 0, 0),
-            (1, 0): (0, 0, 1, 1, 0),
-            (1, 1): (1, 0, 0, 1, 0),
-            (1, 2): (0, 1, 0, 1, 0),
-            (2, 0): (1, 0, 0, 1, 0),
-            (2, 1): (1, 1, 0, 0, 0),
-            (2, 2): (0, 0, 0, 0, 1),
+            (0, 0): (1, 0, 1, 0),
+            (0, 1): (1, 1, 1, 0),
+            (0, 2): (0, 1, 1, 0),
+            (0, 3): (0, 0, 1, 0),
+            (1, 0): (1, 0, 1, 1),
+            (1, 1): (0, 1, 0, 1),
+            (1, 2): (1, 0, 1, 1),
+            (1, 3): (0, 1, 1, 1),
+            (2, 0): (0, 0, 1, 1),
+            (2, 1): (1, 0, 1, 0),
+            (2, 2): (0, 1, 1, 1),
+            (2, 3): (0, 0, 0, 1),
+            (3, 0): (1, 0, 0, 1),
+            (3, 1): (1, 1, 0, 1),
+            (3, 2): (1, 1, 0, 1),
+            (3, 3): (0, 1, 0, 0),
         }
 
         # (U, D, R, L, T)
         self.final_grid = {
-            (0, 0): (1, 0, 1, 0, 0),
-            (0, 1): (1, 1, 1, 0, 0),
-            (0, 2): (0, 1, 1, 0, 0),
-            (1, 0): (1, 0, 1, 1, 0),
-            (1, 1): (1, 1, 1, 1, 0),
-            (1, 2): (0, 1, 0, 1, 0),
-            (2, 0): (1, 0, 0, 1, 0),
-            (2, 1): (1, 1, 0, 1, 0),
-            (2, 2): (0, 0, 0, 0, 1),
+            (0, 0): (1, 0, 1, 0),
+            (0, 1): (1, 1, 0, 0),
+            (0, 2): (0, 1, 1, 0),
+            (0, 3): (0, 0, 1, 0),
+            (1, 0): (1, 0, 1, 1),
+            (1, 1): (0, 1, 0, 0),
+            (1, 2): (1, 0, 0, 1),
+            (1, 3): (0, 1, 1, 1),
+            (2, 0): (0, 0, 1, 1),
+            (2, 1): (1, 0, 0, 0),
+            (2, 2): (0, 1, 0, 0),
+            (2, 3): (0, 0, 0, 1),
+            (3, 0): (1, 0, 0, 1),
+            (3, 1): (1, 1, 0, 0),
+            (3, 2): (1, 1, 0, 0),
+            (3, 3): (0, 1, 0, 0),
         }
 
-        self.actions = {
-            (0, 0): ('R', 'L', 'U', 'D'),
-            (0, 1): ('R', 'L', 'U', 'D'),
-            (0, 2): ('R', 'L', 'U', 'D'),
-            (1, 0): ('R', 'L', 'U', 'D'),
-            (1, 1): ('R', 'L', 'U', 'D'),
-            (1, 2): ('R', 'L', 'U', 'D'),
-            (2, 0): ('R', 'L', 'U', 'D'),
-            (2, 1): ('R', 'L', 'U', 'D'),
-            (2, 2): ('R', 'L', 'U', 'D'),
-        }
+        self.actions = (1, 1, 1, 1)
 
         self.values = {
             (0, 0): 0,
@@ -94,16 +98,16 @@ class GridWorld:
         }
 
         # self.states = self.all_states()
-        self.inter_grid = {**self.initial_grid}
+        self.diff_grid = {**self.final_grid}
 
     def show_grid(self, map):
         for  y in range(self.y_lim-1, -1, -1):
-            print('-'*20)
+            print('-'*self.x_lim*9)
             for x in range(self.x_lim):
                 direct = ''.join(self.arrow(i, j) for i, j in enumerate(map.get((x, y))))
-                print('{:^7}'.format(direct.replace(" ", "")), end="")
+                print('{:^7}'.format(direct.replace(" ", "")), "|", end="")
             print("")
-        print('-'*20)
+        print('-'*self.x_lim*9)
 
     def arrow(self, direction, val):
         # print(val)
@@ -121,37 +125,37 @@ class GridWorld:
         else:
             return ' '
 
-    def make_inter_grid(self):
-        for key, value in self.initial_grid.items():
-            self.inter_grid[key] = np.subtract(self.final_grid[key], value)
-        return self.inter_grid
+    def make_diff_grid(self):
+        for key, value in self.final_grid.items():
+            self.diff_grid[key] = np.subtract(self.initial_grid[key], value)
+        return self.diff_grid
 
     def make_maps(self):
-        new_map = {**self.initial_grid}
+        new_map = {**self.final_grid}
         other_key = ()
-        for key, value in self.inter_grid.items():
+        for key, value in self.diff_grid.items():
             if 1 in value:
                 for look in np.nonzero(value)[0]:
                     # look = np.nonzero(value)[0][0]
                     # print("I am look ", look)
                     x, y = key[0], key[1]
                     if look == 0:
-                        if self.inter_grid.get((x, y + 1))[1]:
+                        if self.diff_grid.get((x, y + 1))[1]:
                             other_key = (x, y + 1)
                             other_look = 1
                     elif look == 1:
-                        if self.inter_grid.get((x, y - 1))[0]:
+                        if self.diff_grid.get((x, y - 1))[0]:
                             other_key = (x, y - 1)
                             other_look = 0
                     elif look == 2:
-                        if self.inter_grid.get((x + 1, y))[3]:
+                        if self.diff_grid.get((x + 1, y))[3]:
                             other_key = (x + 1, y)
                             other_look = 3
                     elif look == 3:
-                        # print("K Inter ", self.inter_grid.get((x, y)))
-                        # print("OK Inter ", self.inter_grid.get((x - 1, y)))
+                        # print("K diff ", self.diff_grid.get((x, y)))
+                        # print("OK diff ", self.diff_grid.get((x - 1, y)))
                         # print("X and Y ", x, " ", y)
-                        if self.inter_grid.get((x - 1, y))[2]:
+                        if self.diff_grid.get((x - 1, y))[2]:
                             other_key = (x - 1, y)
                             # print("I get here")
                             other_look = 2
@@ -167,15 +171,14 @@ class GridWorld:
         # print("Before key ", new_map[key])
         new_map[key] = np.add(map[key], np.eye(1, self.act_lim + 1, look)[0])
         # print("After key ", new_map[key])
-        # new_map[key] = np.add(map[key], self.inter_grid[key])
+        # new_map[key] = np.add(map[key], self.diff_grid[key])
         # print("Before other_key ", new_map[other_key])
         # print("Look", np.eye(1, self.act_lim + 1, look)[0])
         # print("Other look", np.eye(1, self.act_lim + 1, other_look)[0])
         new_map[other_key] = np.add(new_map[other_key], np.eye(1, self.act_lim + 1, other_look)[0])
         # print("After other_key ", new_map[other_key])
-        self.inter_grid[key] = np.subtract(self.inter_grid[key], np.eye(1, self.act_lim + 1, look)[0])
-        self.inter_grid[other_key] = np.subtract(self.inter_grid[other_key], np.eye(1, self.act_lim + 1, other_look)[0])
-        # print(new_map)
+        self.diff_grid[key] = np.subtract(self.diff_grid[key], np.eye(1, self.act_lim + 1, look)[0])
+        self.diff_grid[other_key] = np.subtract(self.diff_grid[other_key], np.eye(1, self.act_lim + 1, other_look)[0])
 
     # def reset_state(self):
     #     self.x = self.x_start
@@ -332,7 +335,7 @@ if __name__ == "__main__":
     grid.show_grid(grid.initial_grid)
     print("Final Grid")
     grid.show_grid(grid.final_grid)
-    print("Intermediate Grid")
-    grid.show_grid(grid.make_inter_grid())
+    print("Differential Grid")
+    grid.show_grid(grid.make_diff_grid())
     print("Multiple Grids In-between")
     grid.make_maps()
