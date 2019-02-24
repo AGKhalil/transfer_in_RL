@@ -1,116 +1,96 @@
 import numpy as np
+import itertools
+import copy
+import random
 import matplotlib.pyplot as plt
-
-GAMMA = 0.9
+from collections import defaultdict
 
 class GridWorld:
 
     def __init__(self):
-        # 10  o
-        # o   o
-        # S   o
 
         self.x_lim = 4
         self.y_lim = 4
-        self.act_lim = 3
+        self.nA = 3
+        self.nS = self.x_lim * self.y_lim
 
         # Start position
         self.x_start = 0
-        self.y_start = 0
+        self.y_start = 3
 
-        # self.reset_state()
+        self.reset_state()
 
-        self.rewards = {
-            (0, 0): -0.1,
-            (0, 1): -0.1,
-            (0, 2): 1,
-            (1, 0): -0.1,
-            (1, 1): -0.1,
-            (1, 2): -0.1,
-            (2, 0): -0.1,
-            (2, 1): -0.1,
-            (2, 2): -0.1,
-        }
+        # [U, D, R, L]
+        self.possible_actions = [0, 1, 2, 3]
+
         # (U, D, R, L, T)
         self.initial_grid = {
-            (0, 0): (1, 0, 1, 0),
-            (0, 1): (1, 1, 1, 0),
-            (0, 2): (0, 1, 1, 0),
-            (0, 3): (0, 0, 1, 0),
-            (1, 0): (1, 0, 1, 1),
-            (1, 1): (0, 1, 0, 1),
-            (1, 2): (1, 0, 1, 1),
-            (1, 3): (0, 1, 1, 1),
-            (2, 0): (0, 0, 1, 1),
-            (2, 1): (1, 0, 1, 0),
-            (2, 2): (0, 1, 1, 1),
-            (2, 3): (0, 0, 0, 1),
-            (3, 0): (1, 0, 0, 1),
-            (3, 1): (1, 1, 0, 1),
-            (3, 2): (1, 1, 0, 1),
-            (3, 3): (0, 1, 0, 0),
+            (0, 0): {'actions': (1, 0, 1, 0), 'done': False, 'reward': -0.1},
+            (0, 1): {'actions': (1, 1, 1, 0), 'done': False, 'reward': -0.1},
+            (0, 2): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
+            (0, 3): {'actions': (0, 0, 1, 0), 'done': False, 'reward': -0.1},
+            (1, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+            (1, 1): {'actions': (0, 1, 0, 1), 'done': False, 'reward': -0.1},
+            (1, 2): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+            (1, 3): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
+            (2, 0): {'actions': (0, 0, 1, 1), 'done': False, 'reward': -0.1},
+            (2, 1): {'actions': (1, 0, 1, 0), 'done': False, 'reward': -0.1},
+            (2, 2): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
+            (2, 3): {'actions': (0, 0, 0, 1), 'done': False, 'reward': -0.1},
+            (3, 0): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
+            (3, 1): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
+            (3, 2): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
+            (3, 3): {'actions': (0, 1, 0, 0), 'done': True, 'reward': 1},
         }
 
         # (U, D, R, L, T)
         self.final_grid = {
-            (0, 0): (1, 0, 1, 0),
-            (0, 1): (1, 1, 0, 0),
-            (0, 2): (0, 1, 1, 0),
-            (0, 3): (0, 0, 1, 0),
-            (1, 0): (1, 0, 1, 1),
-            (1, 1): (0, 1, 0, 0),
-            (1, 2): (1, 0, 0, 1),
-            (1, 3): (0, 1, 1, 1),
-            (2, 0): (0, 0, 1, 1),
-            (2, 1): (1, 0, 0, 0),
-            (2, 2): (0, 1, 0, 0),
-            (2, 3): (0, 0, 0, 1),
-            (3, 0): (1, 0, 0, 1),
-            (3, 1): (1, 1, 0, 0),
-            (3, 2): (1, 1, 0, 0),
-            (3, 3): (0, 1, 0, 0),
+            (0, 0): {'actions': (1, 0, 1, 0), 'done': False, 'reward': -0.1},
+            (0, 1): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+            (0, 2): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
+            (0, 3): {'actions': (0, 0, 1, 0), 'done': False, 'reward': -0.1},
+            (1, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+            (1, 1): {'actions': (0, 1, 0, 0), 'done': False, 'reward': -0.1},
+            (1, 2): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
+            (1, 3): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
+            (2, 0): {'actions': (0, 0, 1, 1), 'done': False, 'reward': -0.1},
+            (2, 1): {'actions': (1, 0, 0, 0), 'done': False, 'reward': -0.1},
+            (2, 2): {'actions': (0, 1, 0, 0), 'done': False, 'reward': -0.1},
+            (2, 3): {'actions': (0, 0, 0, 1), 'done': False, 'reward': -0.1},
+            (3, 0): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
+            (3, 1): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+            (3, 2): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+            (3, 3): {'actions': (0, 1, 0, 0), 'done': True, 'reward': 1},
         }
 
-        self.actions = (1, 1, 1, 1)
-
-        self.values = {
-            (0, 0): 0,
-            (0, 1): 0,
-            (0, 2): 0,
-            (1, 0): 0,
-            (1, 1): 0,
-            (1, 2): 0,
-            (2, 0): 0,
-            (2, 1): 0,
-            (2, 2): 0,
-        }
-
-        self.policy = {
-            (0, 0): '',
-            (0, 1): '',
-            (0, 2): '',
-            (1, 0): '',
-            (1, 1): '',
-            (1, 2): '',
-            (2, 0): '',
-            (2, 1): '',
-            (2, 2): '',
-        }
+        self.list_of_maps = [copy.deepcopy(self.final_grid)]
 
         # self.states = self.all_states()
-        self.diff_grid = {**self.final_grid}
+        self.diff_grid = copy.deepcopy(self.final_grid)
+        self.diff_grid = self.make_diff_grid()
 
-    def show_grid(self, map):
+    def show_grid(self, c_map):
         for  y in range(self.y_lim-1, -1, -1):
             print('-'*self.x_lim*9)
             for x in range(self.x_lim):
-                direct = ''.join(self.arrow(i, j) for i, j in enumerate(map.get((x, y))))
+                direct = ''.join(self.arrow(i, j) for i, j in enumerate(c_map[(x, y)]['actions']))
                 print('{:^7}'.format(direct.replace(" ", "")), "|", end="")
             print("")
         print('-'*self.x_lim*9)
 
-    def arrow(self, direction, val):
-        # print(val)
+    def show_policy(self, c_map):
+        for  y in range(self.y_lim-1, -1, -1):
+            print('-'*self.x_lim*9)
+            for x in range(self.x_lim):
+                if x == self.x_lim - 1 and y == self.y_lim - 1:
+                    direct = ''.join(self.arrow(4))
+                else:
+                    direct = ''.join(self.arrow(c_map.get((x, y), None)))
+                print('{:^7}'.format(direct.replace(" ", "")), "|", end="")
+            print("")
+        print('-'*self.x_lim*9)
+
+    def arrow(self, direction, val=1):
         if val:
             if direction == 0:
                 return '\u2191'
@@ -122,220 +102,84 @@ class GridWorld:
                 return '\u2190'
             elif direction == 4:
                 return 'X'
+            elif not direction:
+                return ' '
         else:
             return ' '
 
     def make_diff_grid(self):
-        for key, value in self.final_grid.items():
-            self.diff_grid[key] = np.subtract(self.initial_grid[key], value)
+        for key, value in self.diff_grid.items():
+            self.diff_grid[key]['actions'] = np.subtract(self.initial_grid[key]['actions'], value['actions'])
         return self.diff_grid
 
     def make_maps(self):
-        new_map = {**self.final_grid}
+        new_map = copy.deepcopy(self.final_grid)
         other_key = ()
+        barrier_cells = []
         for key, value in self.diff_grid.items():
-            if 1 in value:
-                for look in np.nonzero(value)[0]:
-                    # look = np.nonzero(value)[0][0]
-                    # print("I am look ", look)
-                    x, y = key[0], key[1]
-                    if look == 0:
-                        if self.diff_grid.get((x, y + 1))[1]:
-                            other_key = (x, y + 1)
-                            other_look = 1
-                    elif look == 1:
-                        if self.diff_grid.get((x, y - 1))[0]:
-                            other_key = (x, y - 1)
-                            other_look = 0
-                    elif look == 2:
-                        if self.diff_grid.get((x + 1, y))[3]:
-                            other_key = (x + 1, y)
-                            other_look = 3
-                    elif look == 3:
-                        # print("K diff ", self.diff_grid.get((x, y)))
-                        # print("OK diff ", self.diff_grid.get((x - 1, y)))
-                        # print("X and Y ", x, " ", y)
-                        if self.diff_grid.get((x - 1, y))[2]:
-                            other_key = (x - 1, y)
-                            # print("I get here")
-                            other_look = 2
-                    if other_key:
-                        # print("Look and Other Look ", look, " ", other_look)
-                        self.update_grid(new_map, new_map, key, other_key, look, other_look)
-                        self.show_grid(new_map)
-        return new_map
+            if 1 in value['actions']:
+                barrier_cells.append(key)
 
-    def update_grid(self, map, new_map, key, other_key, look, other_look):
-        # print(map[key])
-        # print(np.eye(1, self.act_lim, look)[0])
-        # print("Before key ", new_map[key])
-        new_map[key] = np.add(map[key], np.eye(1, self.act_lim + 1, look)[0])
-        # print("After key ", new_map[key])
-        # new_map[key] = np.add(map[key], self.diff_grid[key])
-        # print("Before other_key ", new_map[other_key])
-        # print("Look", np.eye(1, self.act_lim + 1, look)[0])
-        # print("Other look", np.eye(1, self.act_lim + 1, other_look)[0])
-        new_map[other_key] = np.add(new_map[other_key], np.eye(1, self.act_lim + 1, other_look)[0])
-        # print("After other_key ", new_map[other_key])
-        self.diff_grid[key] = np.subtract(self.diff_grid[key], np.eye(1, self.act_lim + 1, look)[0])
-        self.diff_grid[other_key] = np.subtract(self.diff_grid[other_key], np.eye(1, self.act_lim + 1, other_look)[0])
+        # randomizes the barrier cells
+        # for i, j in enumerate(barrier_cells):
+        #     swap = random.randrange(i, len(barrier_cells))
+        #     barrier_cells[i], barrier_cells[swap] = barrier_cells[swap], j
 
-    # def reset_state(self):
-    #     self.x = self.x_start
-    #     self.y = self.y_start
+        for key in barrier_cells:
+            value = self.diff_grid[key]['actions']
+            for look in np.nonzero(value)[0]:
+                x, y = key[0], key[1]
+                if look == 0:
+                    if self.diff_grid[(x, y + 1)]['actions'][1]:
+                        other_key = (x, y + 1)
+                        other_look = 1
+                elif look == 1:
+                    if self.diff_grid[(x, y - 1)]['actions'][0]:
+                        other_key = (x, y - 1)
+                        other_look = 0
+                elif look == 2:
+                    if self.diff_grid[(x + 1, y)]['actions'][3]:
+                        other_key = (x + 1, y)
+                        other_look = 3
+                elif look == 3:
+                    if self.diff_grid[(x - 1, y)]['actions'][2]:
+                        other_key = (x - 1, y)
+                        other_look = 2
+                if other_key:
+                    self.update_grid(new_map, new_map, key, other_key, look, other_look)
+                    self.list_of_maps.append(copy.deepcopy(new_map))
 
-    # def set_random_policy(self):
-    #     self.policy = {}
-    #     for state in self.actions.keys():
-    #         # action_index = np.random.random_integers(len(self.actions[state])) - 1
-    #         # self.policy[state] = self.actions[state][action_index]
-    #         self.policy[state] = self.get_random_action(state)
+    def update_grid(self, c_map, new_map, key, other_key, look, other_look):
+        new_map[key]['actions'] = np.add(c_map[key]['actions'], np.eye(1, self.nA + 1, look)[0])
+        new_map[key]['actions'] = np.add(c_map[key]['actions'], self.diff_grid[key]['actions'])
+        new_map[other_key]['actions'] = np.add(new_map[other_key]['actions'], np.eye(1, self.nA + 1, other_look)[0])
+        self.diff_grid[key]['actions'] = np.subtract(self.diff_grid[key]['actions'], np.eye(1, self.nA + 1, look)[0])
+        self.diff_grid[other_key]['actions'] = np.subtract(self.diff_grid[other_key]['actions'], np.eye(1, self.nA + 1, other_look)[0])
 
-    # def get_random_action(self, state):
-    #     action_index = np.random.random_integers(len(self.actions[state])) - 1
-    #     action_to_return = self.actions[state][action_index]
-    #     return action_to_return
+    def reset_state(self):
+        p = np.random.random()
+        if p < 0.25:
+            return (self.x_start, self.y_start)
+        elif p < 0.5:
+            return (self.x_start + 1, self.y_start)
+        elif p < 0.75:
+            return (self.x_start, self.y_start - 1)
+        elif p < 1:
+            return (self.x_start + 1, self.y_start - 1)
 
-    # def epsilon_greedy_random_action(self, state, epsilon=0.1):
-    #     p = np.random.random()
-    #     if p < epsilon:
-    #         action = self.get_random_action(state)
-    #     else:
-    #         action = self.policy[state]
-    #     return action
+# if __name__ == "__main__":
 
-    # def reset_values(self):
-    #     self.values = {
-    #         (0, 0): 0,
-    #         (1, 0): 0,
-    #         (0, 1): 0,
-    #         (1, 1): 0,
-    #         (0, 2): 0,
-    #         (1, 2): 0,
-    #     }
+    # grid = GridWorld()
+    # print("Initial Grid")
+    # grid.show_grid(grid.initial_grid)
+    # print("Final Grid")
+    # grid.show_grid(grid.final_grid)
+    # print("Differential Grid")
+    # grid.show_grid(grid.make_diff_grid())
+    # print("Multiple Grids In-between")
+    # grid.initial_grid
+    # grid.make_maps()
+    # for c_map in grid.list_of_maps:
+    #     grid.show_grid(c_map)
 
-    # def set_state(self, state):
-    #     self.x = state[0]
-    #     self.y = state[1]
-
-    # def current_state(self):
-    #     return (self.x, self.y)
-
-    # def all_states(self):
-    #     return set(self.actions.keys()) | set(self.rewards.keys())
-
-    # def is_terminal(self, state):
-    #     return state not in self.actions
-
-    # def step(self, action):
-    #     if action in self.actions[self.current_state()]:
-    #         if action == 'R':
-    #             self.x += 1
-    #         elif action == 'L':
-    #             self.x -= 1
-    #         elif action == 'U':
-    #             self.y += 1
-    #         elif action == 'D':
-    #             self.y -= 1
-    #     return self.current_state(), self.rewards.get(self.current_state(), 0), self.game_over(self.current_state())
- 
-    # def undo_step(self, action):
-    #     if action == 'R':
-    #         self.x -= 1
-    #     elif action == 'L':
-    #         self.x += 1
-    #     elif action == 'U':
-    #         self.y -= 1
-    #     elif action == 'D':
-    #         self.y += 1
-    #     assert(self.current_state() in self.all_states())
-
-    # def game_over(self, state):
-    #     return state not in self.actions
-
-    # def print_policy(self):
-    #     for y in range(self.y_lim-1, -1, -1):
-    #         print("------------")
-    #         for x in range(self.x_lim):
-    #             action = self.policy.get((x, y), " ")
-    #             print("  %s  |" % action, end="")
-    #         print("")
-    #     print("------------")
-
-    # def print_values(self):
-    #     for  y in range(self.y_lim-1, -1, -1):
-    #         print("------------")
-    #         for x in range(self.x_lim):
-    #             value = self.values.get((x, y), 0)
-    #             if value >= 0:
-    #                 print(" %.2f|" % value, end="")
-    #             else:
-    #                 print("%.2f|" % value, end="")
-    #         print("")
-    #     print("------------")
-
-    # def print_rewards(self):
-    #     for  y in range(self.y_lim-1, -1, -1):
-    #         print("------------")
-    #         for x in range(self.x_lim):
-    #             reward = self.rewards.get((x, y), 0)
-    #             if reward >= 0:
-    #                 print(" %.2f|" % reward, end="")
-    #             else:
-    #                 print("%.2f|" % reward, end="")
-    #         print("")
-    #     print("------------")
-
-    # def max_dict(self, dict_in):
-    #     max_key = None
-    #     max_value = float('-inf')
-    #     for key, value in dict_in.items():
-    #         if value > max_value:
-    #             max_value = value
-    #             max_key = key
-    #     return max_key, max_value
-
-    # def play_game(self):
-    #     num_steps = 0
-
-    #     # Start state
-    #     self.reset_state()
-    #     done = False
-    #     states_actions_rewards = []
-
-    #     while (not done) and (num_steps < 5):
-    #         old_state = self.current_state()
-    #         action = self.epsilon_greedy_random_action(self.current_state())
-    #         state, reward, done = self.step(action)
-    #         num_steps = num_steps + 1
-    #         states_actions_rewards.append((old_state, action, reward))
-    #         # print(old_state, action, reward)
-    #     # print("Episode end")
-    #     # print(states_actions_rewards)
-
-    #     G = 0
-    #     states_actions_returns = []
-
-    #     for state, action, reward in reversed(states_actions_rewards):
-    #         print(state, action, reward)
-    #         G = reward + GAMMA * G
-    #         states_actions_returns.append((state, action, G))
-            
-    #     states_actions_returns.reverse()
-
-    #     return states_actions_returns
-
-
-if __name__ == "__main__":
-
-    num_ep = 25
-
-    grid = GridWorld()
-    print("Initial Grid")
-    grid.show_grid(grid.initial_grid)
-    print("Final Grid")
-    grid.show_grid(grid.final_grid)
-    print("Differential Grid")
-    grid.show_grid(grid.make_diff_grid())
-    print("Multiple Grids In-between")
-    grid.make_maps()
+    # print(len(grid.list_of_maps))
