@@ -5,7 +5,7 @@ import copy
 import random
 import matplotlib.pyplot as plt
 from collections import defaultdict
-from my_grid import GridWorld
+from grid_world import GridWorld
 
 class SARSA:
 
