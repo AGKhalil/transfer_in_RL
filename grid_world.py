@@ -30,9 +30,10 @@ class GridWorld:
         y_start (int): grid possible starting y-coordinate
     """
 
-    def __init__(self):
+    def __init__(self, canyon):
         """Initializes grids from intermediate grid creation and interfaces.
         """
+        self.canyon = canyon
         self.x_lim = 4
         self.y_lim = 4
         self.nA = 3
@@ -44,43 +45,80 @@ class GridWorld:
 
         self.possible_actions = [0, 1, 2, 3]
 
-        self.initial_grid = {
-            (0, 0): {'actions': (1, 0, 1, 0), 'done': False, 'reward': -0.1},
-            (0, 1): {'actions': (1, 1, 1, 0), 'done': False, 'reward': -0.1},
-            (0, 2): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
-            (0, 3): {'actions': (0, 0, 1, 0), 'done': False, 'reward': -0.1},
-            (1, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
-            (1, 1): {'actions': (0, 1, 0, 1), 'done': False, 'reward': -0.1},
-            (1, 2): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
-            (1, 3): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
-            (2, 0): {'actions': (0, 0, 1, 1), 'done': False, 'reward': -0.1},
-            (2, 1): {'actions': (1, 0, 1, 0), 'done': False, 'reward': -0.1},
-            (2, 2): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
-            (2, 3): {'actions': (0, 0, 0, 1), 'done': False, 'reward': -0.1},
-            (3, 0): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
-            (3, 1): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
-            (3, 2): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
-            (3, 3): {'actions': (0, 1, 0, 0), 'done': True, 'reward': 1},
-        }
-
-        self.final_grid = {
-            (0, 0): {'actions': (1, 0, 1, 0), 'done': False, 'reward': -0.1},
-            (0, 1): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
-            (0, 2): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
-            (0, 3): {'actions': (0, 0, 1, 0), 'done': False, 'reward': -0.1},
-            (1, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
-            (1, 1): {'actions': (0, 1, 0, 0), 'done': False, 'reward': -0.1},
-            (1, 2): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
-            (1, 3): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
-            (2, 0): {'actions': (0, 0, 1, 1), 'done': False, 'reward': -0.1},
-            (2, 1): {'actions': (1, 0, 0, 0), 'done': False, 'reward': -0.1},
-            (2, 2): {'actions': (0, 1, 0, 0), 'done': False, 'reward': -0.1},
-            (2, 3): {'actions': (0, 0, 0, 1), 'done': False, 'reward': -0.1},
-            (3, 0): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
-            (3, 1): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
-            (3, 2): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
-            (3, 3): {'actions': (0, 1, 0, 0), 'done': True, 'reward': 1},
-        }
+        if self.canyon:
+            self.initial_grid = {
+                (0, 0): {'actions': (1, 0, 1, 0), 'done': False, 'reward': -0.1},
+                (0, 1): {'actions': (1, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (0, 2): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (0, 3): {'actions': (0, 0, 1, 0), 'done': False, 'reward': -0.1},
+                (1, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (1, 1): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
+                (1, 2): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (1, 3): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (2, 0): {'actions': (0, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (2, 1): {'actions': (1, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (2, 2): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (2, 3): {'actions': (0, 0, 0, 1), 'done': False, 'reward': -0.1},
+                (3, 0): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
+                (3, 1): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+                (3, 2): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
+                (3, 3): {'actions': (0, 1, 0, 0), 'done': True, 'reward': 1},
+            }
+            self.final_grid = {
+                (0, 0): {'actions': (1, 0, 1, 0), 'done': False, 'reward': -0.1},
+                (0, 1): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+                (0, 2): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (0, 3): {'actions': (0, 0, 1, 0), 'done': False, 'reward': -0.1},
+                (1, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (1, 1): {'actions': (0, 1, 0, 0), 'done': False, 'reward': -0.1},
+                (1, 2): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
+                (1, 3): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (2, 0): {'actions': (0, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (2, 1): {'actions': (1, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (2, 2): {'actions': (0, 1, 0, 0), 'done': False, 'reward': -0.1},
+                (2, 3): {'actions': (0, 0, 0, 1), 'done': False, 'reward': -0.1},
+                (3, 0): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
+                (3, 1): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+                (3, 2): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+                (3, 3): {'actions': (0, 1, 0, 0), 'done': True, 'reward': 1},
+            }
+        else:
+            self.initial_grid = {
+                (0, 0): {'actions': (1, 0, 1, 0), 'done': False, 'reward': -0.1},
+                (0, 1): {'actions': (1, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (0, 2): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (0, 3): {'actions': (0, 0, 1, 0), 'done': False, 'reward': -0.1},
+                (1, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (1, 1): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
+                (1, 2): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (1, 3): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (2, 0): {'actions': (0, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (2, 1): {'actions': (1, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (2, 2): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
+                (2, 3): {'actions': (0, 1, 0, 1), 'done': False, 'reward': -0.1},
+                (3, 0): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
+                (3, 1): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+                (3, 2): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+                (3, 3): {'actions': (0, 1, 0, 0), 'done': True, 'reward': 1},
+            }
+            self.final_grid = {
+                (0, 0): {'actions': (1, 0, 1, 0), 'done': False, 'reward': -0.1},
+                (0, 1): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+                (0, 2): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (0, 3): {'actions': (0, 0, 1, 0), 'done': False, 'reward': -0.1},
+                (1, 0): {'actions': (0, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (1, 1): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (1, 2): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
+                (1, 3): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (2, 0): {'actions': (0, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (2, 1): {'actions': (1, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (2, 2): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+                (2, 3): {'actions': (0, 1, 0, 1), 'done': False, 'reward': -0.1},
+                (3, 0): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
+                (3, 1): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+                (3, 2): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+                (3, 3): {'actions': (0, 1, 0, 0), 'done': True, 'reward': 1},
+            }
 
         self.list_of_maps = [copy.deepcopy(self.final_grid)]
 
@@ -234,12 +272,11 @@ class GridWorld:
             TYPE: Initial state
         """
         p = np.random.random()
-        # if p < 0.25:
-        #     return (self.x_start, self.y_start)
-        # elif p < 0.5:
-        #     return (self.x_start + 1, self.y_start)
-        # elif p < 0.75:
-        #     return (self.x_start, self.y_start - 1)
-        # elif p < 1:
-        #     return (self.x_start + 1, self.y_start - 1)
-        return (self.x_start, self.y_start)
+        if p < 0.25:
+            return (self.x_start, self.y_start)
+        elif p < 0.5:
+            return (self.x_start + 1, self.y_start)
+        elif p < 0.75:
+            return (self.x_start, self.y_start - 1)
+        elif p < 1:
+            return (self.x_start + 1, self.y_start - 1)
