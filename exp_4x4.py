@@ -7,6 +7,7 @@ import numpy as np
 import itertools
 import matplotlib.pyplot as plt
 
+
 def do_task(sarsa, grid, task):
 
     # number of maximum episodes to run
@@ -17,32 +18,26 @@ def do_task(sarsa, grid, task):
     delta = 0.000001
     steps = 0
     plt_steps = 0
-    list_steps = []
     returns = 0
     list_returns = []
 
     print("Currently at task ", task)
     for episode in range(nEp):
+        episode_return = 0
         state = grid.reset_state()
-        print("Initial State", state)
         action = sarsa.epsilon_greedy_random_action(state)
-        for step in range(1000):
+        for step in itertools.count():
             new_state, reward = sarsa.take_step(state, action)
             returns += reward
-            # plt_steps += step
-            # print("step ", step)
-            # print("reward ", reward, " steps ", step)
-            list_returns.append(returns)
-            list_steps.append(step)
+            episode_return += reward
             new_action = sarsa.epsilon_greedy_random_action(new_state)
             sarsa.update_Q(state, action, new_state, new_action, reward)
-            # print("Q script", sarsa.Q[state, action])
-            # print("state ", state, " action taken", grid.arrow(action), " new state ", new_state)
-            # print("new action", new_action)
-            # sarsa.print_values()
+
+            # print("Episode", episode, "Step", step, "Return", episode_return)
 
             if sarsa.c_map[new_state]['done']:
                 steps += step
+                list_returns.append(episode_return)
                 break
             else:
                 state, action = new_state, new_action
@@ -52,7 +47,8 @@ def do_task(sarsa, grid, task):
             # list_steps.append(steps)
             # list_returns.append(returns)
             print("Convergence at episode ", episode)
-            print("Number of steps ", steps)
+            print("Total of steps ", steps)
+            print("Total return", returns)
             break
         else:
             old_mean = current_mean
@@ -65,55 +61,47 @@ def do_task(sarsa, grid, task):
     print("Environment Policy")
     grid.show_policy(sarsa.policy)
 
-    return sarsa.Q, list_returns, list_steps
+    return sarsa.Q, list_returns, episode
 
 if __name__ == "__main__":
 
-    print("-"*100)
+    print("-" * 100)
 
     # Evaluation
     returns = 0
     steps = 0
     all_returns = []
-    all_steps = []
+    all_episodes = []
 
     # create grid-world instance
-    grid = GridWorld()
+    canyon = True
+    grid = GridWorld(not canyon)
     grid.make_maps()
 
     possible_actions = grid.possible_actions
     x_lim, y_lim = grid.x_lim, grid.y_lim
-    # grid.list_of_maps.reverse()
+    grid.list_of_maps.reverse()
 
-    # Train initial policy
-    sarsa = SARSA(grid.list_of_maps[0], possible_actions, x_lim, y_lim)
-    Q, returns, steps = do_task(sarsa, grid, 0)
-    print("-"*50)
-    # sarsa = SARSA(grid.list_of_maps[0], possible_actions, x_lim, y_lim, Q)
-    # _, returns, steps = do_task(sarsa, grid, 0)
-    all_returns.append(returns)
-    all_steps.append(steps)
-    # for task, current_map in enumerate(grid.list_of_maps[1:], 1):
+    Q = None
+    for task, current_map in enumerate(grid.list_of_maps, 1):
+        print("-" * 50)
         # creates SARSA instance
-        # sarsa = SARSA(current_map, possible_actions, x_lim, y_lim, Q)
-        # Q, returns, steps = do_task(sarsa, grid, task)
-        # all_returns.append(returns)
-        # all_steps.append(steps)
-        # print("-"*50)
+        sarsa = SARSA(current_map, possible_actions, x_lim, y_lim, Q)
+        Q, returns, episodes = do_task(sarsa, grid, task)
+        all_returns.append(returns)
+        all_episodes.append(episodes)
+    print("-" * 100)
 
-    print(len(all_returns))
-    print(len(all_steps))
-
-    # flat_returns = [item for sublist in all_returns for item in sublist]
-    # flat_steps = [item for sublist in all_steps for item in sublist]
-    # inter_steps = zip(semi_steps[1:], semi_steps)
-    # print(semi_steps[1:])
-    # print(semi_steps)
-    # cumal_steps = [i + j for i, j in inter_steps]
-    # flat_steps = [semi_steps[0]] + cumal_steps
-    # print(flat_steps)
-
-    # print(all_steps[0])
-    # print(all_returns[0])
-    plt.plot(all_steps, all_returns, 'ro')
+    flat_returns = [item for sublist in all_returns for item in sublist]
+    avg_returns = [np.mean(flat_returns[:i])
+                   for i in range(1, len(flat_returns))]
+    val = 0
+    for i in all_episodes:
+        val += i
+        plt.axvline(x=val, linestyle='--')
+    plt.plot(flat_returns, label="Immediate Return")
+    plt.plot(avg_returns, label="Averaged Return")
+    plt.xlabel("Number of Episodes")
+    plt.ylabel("Return")
+    plt.legend(loc="lower right")
     plt.show()

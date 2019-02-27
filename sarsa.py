@@ -37,8 +37,8 @@ class SARSA:
             y_lim (TYPE): grid y-length
         """
         self.alpha = 0.5
-        self.discount_factor = 1
-        self.epsilon = 0
+        self.discount_factor = 0.9
+        self.epsilon = 0.1
 
         self.c_map = c_map
         self.possible_actions = possible_actions
@@ -65,7 +65,6 @@ class SARSA:
         if p < self.epsilon:
             action = random.choice(self.possible_actions)
         else:
-            # print(self.Q)
             q_all = [self.Q.get((state, a), 0.0)
                      for a in self.possible_actions]
             max_a = [a for a in self.possible_actions if q_all[
@@ -74,7 +73,6 @@ class SARSA:
                 action = random.choice(max_a)
             else:
                 action = max_a[0]
-                # print("ACTION", action)
         self.policy[state] = action
         return action
 
@@ -89,16 +87,10 @@ class SARSA:
             reward (TYPE): reward received upon taking an action from
                 the current state
         """
-        # if self.Q.get((state, action), None):
-        # print("Q before is", self.Q.get((state, action), 0.0))
         q = self.Q.get((state, action), 0.0)
         self.Q[state, action] = q + self.alpha * \
             (reward + self.discount_factor *
              self.Q.get((new_state, action), 0.0) - q)
-        # print("Q after is", self.Q[state, action])
-        # print("state", state)
-        # else:
-        #     self.Q[state, action] = reward
 
     def take_step(self, state, action):
         """Agent performs action to transition to next state on grid-world.
