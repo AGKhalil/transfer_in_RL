@@ -44,11 +44,9 @@ def do_task(sarsa, grid, task):
 
         current_mean = abs(np.mean(list(np.sum(sarsa.Q.values()))))
         if np.abs(old_mean - current_mean) < delta:
-            # list_steps.append(steps)
-            # list_returns.append(returns)
             print("Convergence at episode ", episode)
             print("Total of steps ", steps)
-            print("Total return", returns)
+            print("Cumulative return", returns)
             break
         else:
             old_mean = current_mean
@@ -61,47 +59,83 @@ def do_task(sarsa, grid, task):
     print("Environment Policy")
     grid.show_policy(sarsa.policy)
 
-    return sarsa.Q, list_returns, episode
+    return sarsa.Q, list_returns, episode, steps
 
 if __name__ == "__main__":
 
     print("-" * 100)
 
     # Evaluation
-    returns = 0
-    steps = 0
+    tot_steps = 0
     all_returns = []
     all_episodes = []
 
+    notrl_tot_steps = 0
+    notrl_returns = []
+    notrl_episodes = []
+
     # create grid-world instance
     canyon = True
-    grid = GridWorld(not canyon)
+    grid = GridWorld(canyon)
     grid.make_maps()
 
     possible_actions = grid.possible_actions
     x_lim, y_lim = grid.x_lim, grid.y_lim
     grid.list_of_maps.reverse()
 
+    # Direct learning on final grid
+    print("Direct learning on final grid")
+    sarsa = SARSA(grid.final_grid, possible_actions, x_lim, y_lim)
+    Q, returns, episodes, steps = do_task(
+        sarsa, grid, len(grid.list_of_maps) - 1)
+    notrl_returns.append(returns)
+    notrl_episodes.append(episodes)
+    notrl_tot_steps += steps
+    print("-" * 80)
+
+    # Incremental transfer learning
+    print("Incremental transfer learning")
     Q = None
-    for task, current_map in enumerate(grid.list_of_maps, 1):
+    for task, current_map in enumerate(grid.list_of_maps):
         print("-" * 50)
         # creates SARSA instance
         sarsa = SARSA(current_map, possible_actions, x_lim, y_lim, Q)
-        Q, returns, episodes = do_task(sarsa, grid, task)
+        Q, returns, episodes, steps = do_task(sarsa, grid, task)
         all_returns.append(returns)
         all_episodes.append(episodes)
+        tot_steps += steps
     print("-" * 100)
+
+    print("Incremental Transfer Cumulative total of steps", tot_steps)
+    print("Direct Cumulative total of steps", notrl_tot_steps)
 
     flat_returns = [item for sublist in all_returns for item in sublist]
     avg_returns = [np.mean(flat_returns[:i])
                    for i in range(1, len(flat_returns))]
+    notrl_flat_returns = [item for sublist in notrl_returns for item in sublist]
+    notrl_avg_returns = [np.mean(notrl_flat_returns[:i])
+                   for i in range(1, len(notrl_flat_returns))]                   
+
+    fig = plt.figure()
+    fig.add_subplot(2,1,1)
     val = 0
     for i in all_episodes:
         val += i
-        plt.axvline(x=val, linestyle='--')
+        plt.axvline(x=val, linestyle='--', color='grey')
     plt.plot(flat_returns, label="Immediate Return")
     plt.plot(avg_returns, label="Averaged Return")
     plt.xlabel("Number of Episodes")
     plt.ylabel("Return")
     plt.legend(loc="lower right")
+    plt.title("Incremental Transfer from Source to Target")
+
+    fig.add_subplot(2,1,2)
+    plt.plot(notrl_flat_returns, label="Immediate Return")
+    plt.plot(notrl_avg_returns, label="Averaged Return")
+    plt.xlabel("Number of Episodes")
+    plt.ylabel("Return")
+    plt.legend(loc="lower right")
+    plt.title("Direct Learning on Target")
+
+    fig.tight_layout()
     plt.show()

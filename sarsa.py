@@ -124,7 +124,7 @@ class SARSA:
             print('-' * self.x_lim * 9)
             for x in range(self.x_lim):
                 value = np.mean([self.Q.get(((x, y), a), 0.0)
-                             for a in self.possible_actions])
+                                 for a in self.possible_actions])
                 if value >= 0:
                     print(' {:.4f}'.format(value), "|", end="")
                 else:
