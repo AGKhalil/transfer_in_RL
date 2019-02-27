@@ -27,7 +27,7 @@ class SARSA:
         y_lim (TYPE): grid y-length
     """
 
-    def __init__(self, c_map, possible_actions, x_lim, y_lim):
+    def __init__(self, c_map, possible_actions, x_lim, y_lim, Q=None):
         """Initializes SARSA parameters
 
         Args:
@@ -37,15 +37,17 @@ class SARSA:
             y_lim (TYPE): grid y-length
         """
         self.alpha = 0.5
-        self.discount_factor = 0.9
-        self.epsilon = 0.1
+        self.discount_factor = 1
+        self.epsilon = 0
 
         self.c_map = c_map
         self.possible_actions = possible_actions
         self.x_lim = x_lim
         self.y_lim = y_lim
 
-        self.Q = dict()
+        if Q is None:
+            Q = dict()
+        self.Q = Q
         self.policy = dict()
 
     def epsilon_greedy_random_action(self, state):
@@ -63,6 +65,7 @@ class SARSA:
         if p < self.epsilon:
             action = random.choice(self.possible_actions)
         else:
+            # print(self.Q)
             q_all = [self.Q.get((state, a), 0.0)
                      for a in self.possible_actions]
             max_a = [a for a in self.possible_actions if q_all[
@@ -71,6 +74,7 @@ class SARSA:
                 action = random.choice(max_a)
             else:
                 action = max_a[0]
+                # print("ACTION", action)
         self.policy[state] = action
         return action
 
@@ -85,13 +89,16 @@ class SARSA:
             reward (TYPE): reward received upon taking an action from
                 the current state
         """
-        if self.Q.get((state, action), None):
-            q = self.Q[(state), action]
-            self.Q[state, action] = q + self.alpha * \
-                (reward + self.discount_factor *
-                 self.Q.get((new_state, action), 0.0) - q)
-        else:
-            self.Q[state, action] = reward
+        # if self.Q.get((state, action), None):
+        # print("Q before is", self.Q.get((state, action), 0.0))
+        q = self.Q.get((state, action), 0.0)
+        self.Q[state, action] = q + self.alpha * \
+            (reward + self.discount_factor *
+             self.Q.get((new_state, action), 0.0) - q)
+        # print("Q after is", self.Q[state, action])
+        # print("state", state)
+        # else:
+        #     self.Q[state, action] = reward
 
     def take_step(self, state, action):
         """Agent performs action to transition to next state on grid-world.
@@ -124,7 +131,7 @@ class SARSA:
         for y in range(self.y_lim - 1, -1, -1):
             print('-' * self.x_lim * 9)
             for x in range(self.x_lim):
-                value = max([self.Q.get(((x, y), a), 0.0)
+                value = np.mean([self.Q.get(((x, y), a), 0.0)
                              for a in self.possible_actions])
                 if value >= 0:
                     print(' {:.4f}'.format(value), "|", end="")

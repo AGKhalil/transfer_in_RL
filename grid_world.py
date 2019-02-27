@@ -95,9 +95,12 @@ class GridWorld:
         for y in range(self.y_lim - 1, -1, -1):
             print('-' * self.x_lim * 9)
             for x in range(self.x_lim):
-                direct = ''.join(self.arrow(i, j)
-                                 for i, j in enumerate(
-                    c_map[(x, y)]['actions']))
+                if x == self.x_lim - 1 and y == self.y_lim - 1:
+                    direct = ''.join(self.arrow(4))
+                else:
+                    direct = ''.join(self.arrow(i, j)
+                                     for i, j in enumerate(
+                        c_map[(x, y)]['actions']))
                 print('{:^7}'.
                       format(direct.replace(" ", "")), "|", end="")
             print("")
@@ -150,7 +153,7 @@ class GridWorld:
         """Creates differential grid to highlight structural barriers between
         the initial and final grids.
         """
-        for key, value in self.diff_grid.items():
+        for key, value in self.final_grid.items():
             self.diff_grid[key]['actions'] = np.subtract(
                 self.initial_grid[key]['actions'], value['actions'])
 
@@ -159,6 +162,7 @@ class GridWorld:
         a time. Can randomize the process to create different grid
         trajectories.
         """
+        self.make_diff_grid()
         new_map = copy.deepcopy(self.final_grid)
         other_key = ()
         barrier_cells = []
@@ -230,11 +234,12 @@ class GridWorld:
             TYPE: Initial state
         """
         p = np.random.random()
-        if p < 0.25:
-            return (self.x_start, self.y_start)
-        elif p < 0.5:
-            return (self.x_start + 1, self.y_start)
-        elif p < 0.75:
-            return (self.x_start, self.y_start - 1)
-        elif p < 1:
-            return (self.x_start + 1, self.y_start - 1)
+        # if p < 0.25:
+        #     return (self.x_start, self.y_start)
+        # elif p < 0.5:
+        #     return (self.x_start + 1, self.y_start)
+        # elif p < 0.75:
+        #     return (self.x_start, self.y_start - 1)
+        # elif p < 1:
+        #     return (self.x_start + 1, self.y_start - 1)
+        return (self.x_start, self.y_start)
