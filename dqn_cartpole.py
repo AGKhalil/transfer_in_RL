@@ -142,14 +142,15 @@ class DQN:
       return np.argmax(self.predict(X)[0])
 
 
-def play_one(env, model, tmodel, eps, gamma, copy_period):
+def play_one(env, model, tmodel, eps, gamma, copy_period, serial_num):
   observation = env.reset()
   done = False
   totalreward = 0
   iters = 0
-  while not done and iters < 2000:
-    # if we reach 2000, just quit, don't want this going forever
-    # the 200 limit seems a bit early
+
+  sars2 = np.empty(shape=[0, 10])
+
+  while not done and iters < 200:
     action = model.sample_action(observation, eps)
     prev_observation = observation
     observation, reward, done, info = env.step(action)
@@ -157,6 +158,10 @@ def play_one(env, model, tmodel, eps, gamma, copy_period):
     totalreward += reward
     if done:
       reward = -200
+
+    tmp_sars2 = [prev_observation[0], prev_observation[1], prev_observation[2], prev_observation[3], action, reward, observation[0], observation[1], observation[2], observation[3]]
+
+    sars2 = np.append(sars2, [tmp_sars2], axis=0)
 
     # update the model
     model.add_experience(prev_observation, action, reward, observation, done)
@@ -167,6 +172,8 @@ def play_one(env, model, tmodel, eps, gamma, copy_period):
     if iters % copy_period == 0:
       tmodel.copy_from(model)
 
+  np.savetxt("./tmp_data/s_%d.csv" % serial_num, sars2, fmt="%10.5f", delimiter=",")
+  
   return totalreward
 
 def plot_running_avg(totalrewards):
@@ -185,7 +192,7 @@ def main():
 
   D = 4
   K = 2
-  sizes = [200,200]
+  sizes = [64,64]
   model = DQN(D, K, sizes, gamma)
   tmodel = DQN(D, K, sizes, gamma)
   init = tf.global_variables_initializer()
@@ -197,9 +204,12 @@ def main():
   N = 500
   totalrewards = np.empty(N)
   costs = np.empty(N)
+
   for n in range(N):
     eps = 1.0/np.sqrt(n+1)
-    totalreward = play_one(env, model, tmodel, eps, gamma, copy_period)
+    
+    # eps = 0.1
+    totalreward = play_one(env, model, tmodel, eps, gamma, copy_period, n)
     totalrewards[n] = totalreward
     if n % 100 == 0:
       print("episode:", n, "total reward:", totalreward, "eps:", eps, "avg reward (last 100):", totalrewards[max(0, n-100):(n+1)].mean())
@@ -207,6 +217,7 @@ def main():
   print("avg reward for last 100 episodes:", totalrewards[-100:].mean())
   print("total steps:", totalrewards.sum())
 
+  # np.savetxt("dataaa.csv", totalrewards, fmt="%d", delimiter=",")
   plt.plot(totalrewards)
   plt.title("Rewards")
   plt.show()
