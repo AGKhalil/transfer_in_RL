@@ -54,12 +54,12 @@ def do_task(sarsa, grid, task):
             print("Total of steps ", steps)
             print("Cumulative return", returns)
             # print results to terminal
-            print("Environment Map")
-            grid.show_grid(sarsa.c_map)
-            print("Environment Values")
-            sarsa.print_values()
-            print("Environment Policy")
-            grid.show_policy(sarsa.policy)
+            # print("Environment Map")
+            # grid.show_grid(sarsa.c_map)
+            # print("Environment Values")
+            # sarsa.print_values()
+            # print("Environment Policy")
+            # grid.show_policy(sarsa.policy)
             return sarsa.Q, list_returns, episode, list_steps
         else:
             old_mean = current_mean
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     notrl_steps = []
 
     # create grid-world instance
-    canyon = True
+    canyon = False
     grid = GridWorld(canyon)
     grid.make_maps()
 
@@ -97,7 +97,11 @@ if __name__ == "__main__":
     print("-" * 80)
 
     # Incremental transfer learning
-    print("Incremental transfer learning")
+    if canyon:
+        canyon_str = "(CANYON)"
+    else:
+        canyon_str = "(NO CANYON)"
+    print("Incremental transfer learning", canyon_str)
     Q = None
     for task, current_map in enumerate(grid.list_of_maps):
         print("-" * 50)
