@@ -6,6 +6,7 @@ import sys
 import numpy as np
 import itertools
 import matplotlib.pyplot as plt
+import bottleneck as bn
 
 
 def do_task(sarsa, grid, task):
@@ -20,9 +21,11 @@ def do_task(sarsa, grid, task):
     plt_steps = 0
     returns = 0
     list_returns = []
+    sarsa_saves = []
+    list_steps = []
 
     print("Currently at task ", task)
-    for episode in range(nEp):
+    for episode in range(1, nEp):
         episode_return = 0
         state = grid.reset_state()
         action = sarsa.epsilon_greedy_random_action(state)
@@ -32,12 +35,15 @@ def do_task(sarsa, grid, task):
             episode_return += reward
             new_action = sarsa.epsilon_greedy_random_action(new_state)
             sarsa.update_Q(state, action, new_state, new_action, reward)
+            sarsa_saves.append([state, action, reward, new_state, new_action])
 
             # print("Episode", episode, "Step", step, "Return", episode_return)
 
             if sarsa.c_map[new_state]['done']:
                 steps += step
                 list_returns.append(episode_return)
+                list_steps.append(steps)
+                # np.savetxt("tmp_data/s_%s_%d.csv" % (task, episode), sarsa_saves, fmt="%s", delimiter=",")
                 break
             else:
                 state, action = new_state, new_action
@@ -47,19 +53,16 @@ def do_task(sarsa, grid, task):
             print("Convergence at episode ", episode)
             print("Total of steps ", steps)
             print("Cumulative return", returns)
-            break
+            # print results to terminal
+            print("Environment Map")
+            grid.show_grid(sarsa.c_map)
+            print("Environment Values")
+            sarsa.print_values()
+            print("Environment Policy")
+            grid.show_policy(sarsa.policy)
+            return sarsa.Q, list_returns, episode, list_steps
         else:
             old_mean = current_mean
-
-    # print results to terminal
-    print("Environment Map")
-    grid.show_grid(sarsa.c_map)
-    print("Environment Values")
-    sarsa.print_values()
-    print("Environment Policy")
-    grid.show_policy(sarsa.policy)
-
-    return sarsa.Q, list_returns, episode, steps
 
 if __name__ == "__main__":
 
@@ -68,11 +71,11 @@ if __name__ == "__main__":
     # Evaluation
     tot_steps = 0
     all_returns = []
-    all_episodes = []
+    all_steps = []
 
     notrl_tot_steps = 0
     notrl_returns = []
-    notrl_episodes = []
+    notrl_steps = []
 
     # create grid-world instance
     canyon = True
@@ -89,8 +92,8 @@ if __name__ == "__main__":
     Q, returns, episodes, steps = do_task(
         sarsa, grid, len(grid.list_of_maps) - 1)
     notrl_returns.append(returns)
-    notrl_episodes.append(episodes)
-    notrl_tot_steps += steps
+    notrl_steps.append(steps)
+    notrl_tot_steps += steps[-1]
     print("-" * 80)
 
     # Incremental transfer learning
@@ -102,40 +105,39 @@ if __name__ == "__main__":
         sarsa = SARSA(current_map, possible_actions, x_lim, y_lim, Q)
         Q, returns, episodes, steps = do_task(sarsa, grid, task)
         all_returns.append(returns)
-        all_episodes.append(episodes)
-        tot_steps += steps
+        tot_counter = 0
+        if task != 0:
+            tot_counter += all_steps[task - 1][-1]
+            all_steps.append([i + tot_counter for i in steps])
+        else:
+            all_steps.append([i for i in steps])
     print("-" * 100)
 
-    print("Incremental Transfer Cumulative total of steps", tot_steps)
-    print("Direct Cumulative total of steps", notrl_tot_steps)
+    print("Incremental Transfer Cumulative total of steps",
+          all_steps[-1][-1] - all_steps[0][-1])
+    print("Direct Cumulative total of steps", notrl_steps[-1][-1])
 
     flat_returns = [item for sublist in all_returns for item in sublist]
-    avg_returns = [np.mean(flat_returns[:i])
-                   for i in range(1, len(flat_returns))]
-    notrl_flat_returns = [item for sublist in notrl_returns for item in sublist]
-    notrl_avg_returns = [np.mean(notrl_flat_returns[:i])
-                   for i in range(1, len(notrl_flat_returns))]                   
+    flat_steps = [item for sublist in all_steps for item in sublist]
+    avg_returns = bn.move_mean(flat_returns, window=5, min_count=1)
+    notrl_flat_returns = [
+        item for sublist in notrl_returns for item in sublist]
+    notrl_avg_returns = bn.move_mean(notrl_flat_returns, window=5, min_count=1)
 
     fig = plt.figure()
-    fig.add_subplot(2,1,1)
+    a0 = fig.add_subplot(1, 1, 1)
     val = 0
-    for i in all_episodes:
-        val += i
-        plt.axvline(x=val, linestyle='--', color='grey')
-    plt.plot(flat_returns, label="Immediate Return")
-    plt.plot(avg_returns, label="Averaged Return")
-    plt.xlabel("Number of Episodes")
+    for i in all_steps:
+        a0.axvline(x=i[-1], linestyle='--', color='grey')
+    # a0.plot(flat_steps, flat_returns, label="Incremental Immediate Return")
+    a0.plot(flat_steps, avg_returns, label="IA")
+    x_episodes = [i + all_steps[0][-1] - notrl_steps[0][0]
+                  for i in notrl_steps[0]]
+    # a0.plot(x_episodes, notrl_flat_returns, label="Direct Immediate Return")
+    a0.plot(x_episodes, notrl_avg_returns, label="DA")
+    a0.set_aspect(aspect=75)
+    plt.xlabel("Steps")
     plt.ylabel("Return")
     plt.legend(loc="lower right")
     plt.title("Incremental Transfer from Source to Target")
-
-    fig.add_subplot(2,1,2)
-    plt.plot(notrl_flat_returns, label="Immediate Return")
-    plt.plot(notrl_avg_returns, label="Averaged Return")
-    plt.xlabel("Number of Episodes")
-    plt.ylabel("Return")
-    plt.legend(loc="lower right")
-    plt.title("Direct Learning on Target")
-
-    fig.tight_layout()
     plt.show()
