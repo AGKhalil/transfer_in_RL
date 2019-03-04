@@ -38,7 +38,6 @@ class SARSA:
         """
         self.alpha = 0.5
         self.discount_factor = 0.9
-        self.epsilon = 0.1
 
         self.c_map = c_map
         self.possible_actions = possible_actions
@@ -50,7 +49,7 @@ class SARSA:
         self.Q = Q
         self.policy = dict()
 
-    def epsilon_greedy_random_action(self, state):
+    def epsilon_greedy_random_action(self, state, step=0):
         """Chooses action based on a greedy policy, but allows for
         exploration by a 1 - epsilon probability.
 
@@ -60,9 +59,11 @@ class SARSA:
         Returns:
             TYPE: action to be taken
         """
+        # epsilon = 1.0 / np.sqrt(step + 1)
+        epsilon = 0.5
         p = np.random.random()
         count = 0
-        if p < self.epsilon:
+        if p < epsilon:
             action = random.choice(self.possible_actions)
         else:
             q_all = [self.Q.get((state, a), 0.0)

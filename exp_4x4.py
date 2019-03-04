@@ -79,7 +79,7 @@ if __name__ == "__main__":
 
     # create grid-world instance
     canyon = False
-    grid = GridWorld(canyon)
+    grid = GridWorld(4, canyon)
     grid.make_maps()
 
     possible_actions = grid.possible_actions
