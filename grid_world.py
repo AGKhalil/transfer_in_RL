@@ -30,95 +30,298 @@ class GridWorld:
         y_start (int): grid possible starting y-coordinate
     """
 
-    def __init__(self, canyon):
+    def __init__(self, world, canyon=None):
         """Initializes grids from intermediate grid creation and interfaces.
         """
+        self.world = world
         self.canyon = canyon
-        self.x_lim = 4
-        self.y_lim = 4
+        self.x_lim = self.world
+        self.y_lim = self.world
         self.nA = 3
         self.nS = self.x_lim * self.y_lim
-        self.x_start = 0
-        self.y_start = 3
-
-        self.reset_state()
 
         self.possible_actions = [0, 1, 2, 3]
 
-        if self.canyon:
+        if self.world == 4:
+            self.x_start = 0
+            self.y_start = 3
+            self.x_final = 3
+            self.y_final = 3
+            if self.canyon:
+                self.initial_grid = {
+                    (0, 0): {'actions': (1, 0, 1, 0), 'done': False, 'reward': -0.1},
+                    (0, 1): {'actions': (1, 1, 1, 0), 'done': False, 'reward': -0.1},
+                    (0, 2): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
+                    (0, 3): {'actions': (0, 0, 1, 0), 'done': False, 'reward': -0.1},
+
+                    (1, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                    (1, 1): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
+                    (1, 2): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                    (1, 3): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
+
+                    (2, 0): {'actions': (0, 0, 1, 1), 'done': False, 'reward': -0.1},
+                    (2, 1): {'actions': (1, 0, 0, 0), 'done': False, 'reward': -0.1},
+                    (2, 2): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
+                    (2, 3): {'actions': (0, 0, 0, 1), 'done': False, 'reward': -0.1},
+
+                    (3, 0): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
+                    (3, 1): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+                    (3, 2): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
+                    (3, 3): {'actions': (0, 1, 0, 0), 'done': True, 'reward': 1},
+                }
+                self.final_grid = {
+                    (0, 0): {'actions': (1, 0, 1, 0), 'done': False, 'reward': -0.1},
+                    (0, 1): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+                    (0, 2): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
+                    (0, 3): {'actions': (0, 0, 1, 0), 'done': False, 'reward': -0.1},
+
+                    (1, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                    (1, 1): {'actions': (0, 1, 0, 0), 'done': False, 'reward': -0.1},
+                    (1, 2): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
+                    (1, 3): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
+
+                    (2, 0): {'actions': (0, 0, 1, 1), 'done': False, 'reward': -0.1},
+                    (2, 1): {'actions': (1, 0, 0, 0), 'done': False, 'reward': -0.1},
+                    (2, 2): {'actions': (0, 1, 0, 0), 'done': False, 'reward': -0.1},
+                    (2, 3): {'actions': (0, 0, 0, 1), 'done': False, 'reward': -0.1},
+
+                    (3, 0): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
+                    (3, 1): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+                    (3, 2): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+                    (3, 3): {'actions': (0, 1, 0, 0), 'done': True, 'reward': 1},
+                }
+            else:
+                self.initial_grid = {
+                    (0, 0): {'actions': (1, 0, 1, 0), 'done': False, 'reward': -0.1},
+                    (0, 1): {'actions': (1, 1, 1, 0), 'done': False, 'reward': -0.1},
+                    (0, 2): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
+                    (0, 3): {'actions': (0, 0, 1, 0), 'done': False, 'reward': -0.1},
+
+                    (1, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                    (1, 1): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
+                    (1, 2): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                    (1, 3): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
+
+                    (2, 0): {'actions': (0, 0, 1, 1), 'done': False, 'reward': -0.1},
+                    (2, 1): {'actions': (1, 0, 0, 0), 'done': False, 'reward': -0.1},
+                    (2, 2): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
+                    (2, 3): {'actions': (0, 1, 0, 1), 'done': False, 'reward': -0.1},
+
+                    (3, 0): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
+                    (3, 1): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+                    (3, 2): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+                    (3, 3): {'actions': (0, 1, 0, 0), 'done': True, 'reward': 1},
+                }
+                self.final_grid = {
+                    (0, 0): {'actions': (1, 0, 1, 0), 'done': False, 'reward': -0.1},
+                    (0, 1): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+                    (0, 2): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
+                    (0, 3): {'actions': (0, 0, 1, 0), 'done': False, 'reward': -0.1},
+
+                    (1, 0): {'actions': (0, 0, 1, 1), 'done': False, 'reward': -0.1},
+                    (1, 1): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                    (1, 2): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
+                    (1, 3): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
+
+                    (2, 0): {'actions': (0, 0, 1, 1), 'done': False, 'reward': -0.1},
+                    (2, 1): {'actions': (1, 0, 0, 0), 'done': False, 'reward': -0.1},
+                    (2, 2): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+                    (2, 3): {'actions': (0, 1, 0, 1), 'done': False, 'reward': -0.1},
+
+                    (3, 0): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
+                    (3, 1): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+                    (3, 2): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+                    (3, 3): {'actions': (0, 1, 0, 0), 'done': True, 'reward': 1},
+                }
+        elif self.world == 9:
+            self.x_start = 0
+            self.y_start = 5
+            self.x_final = 5
+            self.y_final = 4
             self.initial_grid = {
-                (0, 0): {'actions': (1, 0, 1, 0), 'done': False, 'reward': -0.1},
-                (0, 1): {'actions': (1, 1, 1, 0), 'done': False, 'reward': -0.1},
-                (0, 2): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
-                (0, 3): {'actions': (0, 0, 1, 0), 'done': False, 'reward': -0.1},
-                (1, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
-                (1, 1): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
-                (1, 2): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
-                (1, 3): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
-                (2, 0): {'actions': (0, 0, 1, 1), 'done': False, 'reward': -0.1},
-                (2, 1): {'actions': (1, 0, 0, 0), 'done': False, 'reward': -0.1},
-                (2, 2): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
-                (2, 3): {'actions': (0, 0, 0, 1), 'done': False, 'reward': -0.1},
-                (3, 0): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
-                (3, 1): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
-                (3, 2): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
-                (3, 3): {'actions': (0, 1, 0, 0), 'done': True, 'reward': 1},
-            }
-            self.final_grid = {
-                (0, 0): {'actions': (1, 0, 1, 0), 'done': False, 'reward': -0.1},
-                (0, 1): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
-                (0, 2): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
-                (0, 3): {'actions': (0, 0, 1, 0), 'done': False, 'reward': -0.1},
-                (1, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
-                (1, 1): {'actions': (0, 1, 0, 0), 'done': False, 'reward': -0.1},
-                (1, 2): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
-                (1, 3): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
-                (2, 0): {'actions': (0, 0, 1, 1), 'done': False, 'reward': -0.1},
-                (2, 1): {'actions': (1, 0, 0, 0), 'done': False, 'reward': -0.1},
-                (2, 2): {'actions': (0, 1, 0, 0), 'done': False, 'reward': -0.1},
-                (2, 3): {'actions': (0, 0, 0, 1), 'done': False, 'reward': -0.1},
-                (3, 0): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
-                (3, 1): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
-                (3, 2): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
-                (3, 3): {'actions': (0, 1, 0, 0), 'done': True, 'reward': 1},
-            }
-        else:
-            self.initial_grid = {
-                (0, 0): {'actions': (1, 0, 1, 0), 'done': False, 'reward': -0.1},
-                (0, 1): {'actions': (1, 1, 1, 0), 'done': False, 'reward': -0.1},
-                (0, 2): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
-                (0, 3): {'actions': (0, 0, 1, 0), 'done': False, 'reward': -0.1},
-                (1, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
-                (1, 1): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
-                (1, 2): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
-                (1, 3): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
-                (2, 0): {'actions': (0, 0, 1, 1), 'done': False, 'reward': -0.1},
-                (2, 1): {'actions': (1, 0, 0, 0), 'done': False, 'reward': -0.1},
-                (2, 2): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
-                (2, 3): {'actions': (0, 1, 0, 1), 'done': False, 'reward': -0.1},
-                (3, 0): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
-                (3, 1): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
-                (3, 2): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
-                (3, 3): {'actions': (0, 1, 0, 0), 'done': True, 'reward': 1},
-            }
-            self.final_grid = {
-                (0, 0): {'actions': (1, 0, 1, 0), 'done': False, 'reward': -0.1},
-                (0, 1): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
-                (0, 2): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
-                (0, 3): {'actions': (0, 0, 1, 0), 'done': False, 'reward': -0.1},
-                (1, 0): {'actions': (0, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (0, 0): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (0, 1): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (0, 2): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (0, 3): {'actions': (1, 0, 1, 0), 'done': False, 'reward': -0.1},
+                (0, 4): {'actions': (1, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (0, 5): {'actions': (1, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (0, 6): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (0, 7): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (0, 8): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+
+                (1, 0): {'actions': (0, 0, 1, 0), 'done': False, 'reward': -0.1},
                 (1, 1): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
-                (1, 2): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
-                (1, 3): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
-                (2, 0): {'actions': (0, 0, 1, 1), 'done': False, 'reward': -0.1},
-                (2, 1): {'actions': (1, 0, 0, 0), 'done': False, 'reward': -0.1},
-                (2, 2): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
-                (2, 3): {'actions': (0, 1, 0, 1), 'done': False, 'reward': -0.1},
-                (3, 0): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
-                (3, 1): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
-                (3, 2): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
-                (3, 3): {'actions': (0, 1, 0, 0), 'done': True, 'reward': 1},
+                (1, 2): {'actions': (1, 0, 1, 0), 'done': False, 'reward': -0.1},
+                (1, 3): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (1, 4): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (1, 5): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (1, 6): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (1, 7): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (1, 8): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+
+                (2, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (2, 1): {'actions': (1, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (2, 2): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (2, 3): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (2, 4): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (2, 5): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (2, 6): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (2, 7): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (2, 8): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+
+                (3, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (3, 1): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (3, 2): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (3, 3): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (3, 4): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (3, 5): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (3, 6): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (3, 7): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (3, 8): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
+
+                (4, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (4, 1): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (4, 2): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
+                (4, 3): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (4, 4): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (4, 5): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (4, 6): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (4, 7): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (4, 8): {'actions': (0, 1, 0, 1), 'done': False, 'reward': -0.1},
+
+                (5, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (5, 1): {'actions': (0, 1, 0, 1), 'done': False, 'reward': -0.1},
+                (5, 2): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (5, 3): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (5, 4): {'actions': (1, 1, 1, 1), 'done': True, 'reward': 1},
+                (5, 5): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (5, 6): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (5, 7): {'actions': (0, 1, 0, 1), 'done': False, 'reward': -0.1},
+                (5, 8): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+
+                (6, 0): {'actions': (0, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (6, 1): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (6, 2): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (6, 3): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (6, 4): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (6, 5): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
+                (6, 6): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (6, 7): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (6, 8): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+
+                (7, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (7, 1): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (7, 2): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (7, 3): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (7, 4): {'actions': (0, 1, 0, 1), 'done': False, 'reward': -0.1},
+                (7, 5): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (7, 6): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
+                (7, 7): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (7, 8): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+
+                (8, 0): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
+                (8, 1): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
+                (8, 2): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+                (8, 3): {'actions': (0, 1, 0, 1), 'done': False, 'reward': -0.1},
+                (8, 4): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (8, 5): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (8, 6): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (8, 7): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
+                (8, 8): {'actions': (0, 1, 0, 0), 'done': False, 'reward': -0.1},
             }
+            self.final_grid = {
+                (0, 0): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (0, 1): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (0, 2): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (0, 3): {'actions': (1, 0, 1, 0), 'done': False, 'reward': -0.1},
+                (0, 4): {'actions': (1, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (0, 5): {'actions': (1, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (0, 6): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (0, 7): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (0, 8): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+
+                (1, 0): {'actions': (0, 0, 1, 0), 'done': False, 'reward': -0.1},
+                (1, 1): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (1, 2): {'actions': (1, 0, 1, 0), 'done': False, 'reward': -0.1},
+                (1, 3): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (1, 4): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
+                (1, 5): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (1, 6): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (1, 7): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (1, 8): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+
+                (2, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (2, 1): {'actions': (1, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (2, 2): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (2, 3): {'actions': (0, 1, 0, 1), 'done': False, 'reward': -0.1},
+                (2, 4): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (2, 5): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
+                (2, 6): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (2, 7): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (2, 8): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+
+                (3, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (3, 1): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (3, 2): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (3, 3): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (3, 4): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (3, 5): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (3, 6): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (3, 7): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (3, 8): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
+
+                (4, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (4, 1): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (4, 2): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
+                (4, 3): {'actions': (1, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (4, 4): {'actions': (1, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (4, 5): {'actions': (1, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (4, 6): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (4, 7): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (4, 8): {'actions': (0, 1, 0, 1), 'done': False, 'reward': -0.1},
+
+                (5, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (5, 1): {'actions': (0, 1, 0, 1), 'done': False, 'reward': -0.1},
+                (5, 2): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (5, 3): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (5, 4): {'actions': (1, 1, 1, 1), 'done': True, 'reward': 1},
+                (5, 5): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (5, 6): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (5, 7): {'actions': (0, 1, 0, 1), 'done': False, 'reward': -0.1},
+                (5, 8): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+
+                (6, 0): {'actions': (0, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (6, 1): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (6, 2): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (6, 3): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (6, 4): {'actions': (1, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (6, 5): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
+                (6, 6): {'actions': (0, 1, 1, 1), 'done': False, 'reward': -0.1},
+                (6, 7): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (6, 8): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+
+                (7, 0): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (7, 1): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (7, 2): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (7, 3): {'actions': (1, 0, 1, 1), 'done': False, 'reward': -0.1},
+                (7, 4): {'actions': (0, 1, 0, 1), 'done': False, 'reward': -0.1},
+                (7, 5): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (7, 6): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
+                (7, 7): {'actions': (0, 1, 1, 0), 'done': False, 'reward': -0.1},
+                (7, 8): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+
+                (8, 0): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
+                (8, 1): {'actions': (1, 1, 0, 1), 'done': False, 'reward': -0.1},
+                (8, 2): {'actions': (1, 1, 0, 0), 'done': False, 'reward': -0.1},
+                (8, 3): {'actions': (0, 1, 0, 1), 'done': False, 'reward': -0.1},
+                (8, 4): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (8, 5): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (8, 6): {'actions': (0, 0, 0, 0), 'done': False, 'reward': -0.1},
+                (8, 7): {'actions': (1, 0, 0, 1), 'done': False, 'reward': -0.1},
+                (8, 8): {'actions': (0, 1, 0, 0), 'done': False, 'reward': -0.1},
+            }
+
+        self.reset_state()
 
         self.list_of_maps = [copy.deepcopy(self.final_grid)]
 
@@ -133,7 +336,7 @@ class GridWorld:
         for y in range(self.y_lim - 1, -1, -1):
             print('-' * self.x_lim * 9)
             for x in range(self.x_lim):
-                if x == self.x_lim - 1 and y == self.y_lim - 1:
+                if x == self.x_final and y == self.y_final:
                     direct = ''.join(self.arrow(4))
                 else:
                     direct = ''.join(self.arrow(i, j)
@@ -153,7 +356,7 @@ class GridWorld:
         for y in range(self.y_lim - 1, -1, -1):
             print('-' * self.x_lim * 9)
             for x in range(self.x_lim):
-                if x == self.x_lim - 1 and y == self.y_lim - 1:
+                if x == self.x_final and y == self.y_final:
                     direct = ''.join(self.arrow(4))
                 else:
                     direct = ''.join(self.arrow(c_map.get((x, y), None)))
@@ -203,40 +406,76 @@ class GridWorld:
         self.make_diff_grid()
         new_map = copy.deepcopy(self.final_grid)
         other_key = ()
-        barrier_cells = []
-        for key, value in self.diff_grid.items():
-            if 1 in value['actions']:
-                barrier_cells.append(key)
 
-        # randomizes the barrier cells
-        # for i, j in enumerate(barrier_cells):
-        #     swap = random.randrange(i, len(barrier_cells))
-        #     barrier_cells[i], barrier_cells[swap] = barrier_cells[swap], j
+        if self.world == 4:
+            barrier_cells = []
+            for key, value in self.diff_grid.items():
+                # print(value)
+                if 1 in value['actions']:
+                    barrier_cells.append(key)
+            self.show_grid(self.diff_grid)
 
-        for key in barrier_cells:
-            value = self.diff_grid[key]['actions']
-            for look in np.nonzero(value)[0]:
-                x, y = key[0], key[1]
-                if look == 0:
-                    if self.diff_grid[(x, y + 1)]['actions'][1]:
-                        other_key = (x, y + 1)
-                        other_look = 1
-                elif look == 1:
-                    if self.diff_grid[(x, y - 1)]['actions'][0]:
-                        other_key = (x, y - 1)
-                        other_look = 0
-                elif look == 2:
-                    if self.diff_grid[(x + 1, y)]['actions'][3]:
-                        other_key = (x + 1, y)
-                        other_look = 3
-                elif look == 3:
-                    if self.diff_grid[(x - 1, y)]['actions'][2]:
-                        other_key = (x - 1, y)
-                        other_look = 2
-                if other_key:
-                    self.update_grid(new_map, new_map, key,
-                                     other_key, look, other_look)
-                    self.list_of_maps.append(copy.deepcopy(new_map))
+            # randomizes the barrier cells
+            # for i, j in enumerate(barrier_cells):
+            #     swap = random.randrange(i, len(barrier_cells))
+            #     barrier_cells[i], barrier_cells[swap] = barrier_cells[swap], j
+
+            for key in barrier_cells:
+                value = self.diff_grid[key]['actions']
+                for look in np.nonzero(value)[0]:
+                    x, y = key[0], key[1]
+                    if look == 0:
+                        if self.diff_grid[(x, y + 1)]['actions'][1]:
+                            other_key = (x, y + 1)
+                            other_look = 1
+                    elif look == 1:
+                        if self.diff_grid[(x, y - 1)]['actions'][0]:
+                            other_key = (x, y - 1)
+                            other_look = 0
+                    elif look == 2:
+                        if self.diff_grid[(x + 1, y)]['actions'][3]:
+                            other_key = (x + 1, y)
+                            other_look = 3
+                    elif look == 3:
+                        if self.diff_grid[(x - 1, y)]['actions'][2]:
+                            other_key = (x - 1, y)
+                            other_look = 2
+
+                    if other_key:
+                        self.update_grid(new_map, new_map, key,
+                                         other_key, look, other_look)
+                        self.list_of_maps.append(copy.deepcopy(new_map))
+        elif self.world == 9:
+            barrier_cells = []
+            for key, value in self.diff_grid.items():
+                if sum(value['actions']) == 4:
+                    barrier_cells.append(key)
+            for key in barrier_cells:
+                value = self.diff_grid[key]['actions']
+                for look in np.nonzero(value)[0]:
+                    x, y = key[0], key[1]
+                    if look == 0:
+                        if self.diff_grid[(x, y + 1)]['actions'][1]:
+                            other_key = (x, y + 1)
+                            other_look = 1
+                    elif look == 1:
+                        if self.diff_grid[(x, y - 1)]['actions'][0]:
+                            other_key = (x, y - 1)
+                            other_look = 0
+                    elif look == 2:
+                        if self.diff_grid[(x + 1, y)]['actions'][3]:
+                            other_key = (x + 1, y)
+                            other_look = 3
+                    elif look == 3:
+                        if self.diff_grid[(x - 1, y)]['actions'][2]:
+                            other_key = (x - 1, y)
+                            other_look = 2
+
+                    # if other_key:
+                    if sum(self.diff_grid[other_key]['actions']) != 4:
+                        self.update_grid(new_map, new_map, key,
+                                         other_key, look, other_look)
+                self.list_of_maps.append(copy.deepcopy(new_map))
 
     def update_grid(self, c_map, new_map, key, other_key, look, other_look):
         """Updates the new map with the barrier removal change. Also removes
@@ -253,8 +492,6 @@ class GridWorld:
         """
         new_map[key]['actions'] = np.add(
             c_map[key]['actions'], np.eye(1, self.nA + 1, look)[0])
-        new_map[key]['actions'] = np.add(
-            c_map[key]['actions'], self.diff_grid[key]['actions'])
         new_map[other_key]['actions'] = np.add(
             new_map[other_key]['actions'],
             np.eye(1, self.nA + 1, other_look)[0])
@@ -280,3 +517,14 @@ class GridWorld:
             return (self.x_start, self.y_start - 1)
         elif p < 1:
             return (self.x_start + 1, self.y_start - 1)
+
+if __name__ == "__main__":
+    grid = GridWorld(9)
+    # grid.make_diff_grid()
+    # grid.show_grid(grid.diff_grid)
+    grid.make_maps()
+    grid.list_of_maps.reverse()
+    for mymap in grid.list_of_maps:
+        grid.show_grid(mymap)
+
+    print(len(grid.list_of_maps))
