@@ -4,12 +4,14 @@ from grid_world import GridWorld
 from sarsa import SARSA
 import sys
 import numpy as np
+import random
 import itertools
 import matplotlib.pyplot as plt
 import bottleneck as bn
+import csv
 
 
-def do_task(sarsa, grid, task):
+def do_task(sarsa, grid, task, exploit=False):
 
     # number of maximum episodes to run
     nEp = 1000
@@ -33,20 +35,19 @@ def do_task(sarsa, grid, task):
             new_state, reward = sarsa.take_step(state, action)
             returns += reward
             episode_return += reward
-            new_action = sarsa.epsilon_greedy_random_action(new_state, step)
+            new_action = sarsa.epsilon_greedy_random_action(new_state, step, exploit)
             sarsa.update_Q(state, action, new_state, new_action, reward)
             sarsa_saves.append([state, action, reward, new_state, new_action])
 
             # if step % 100 == 0:
-            #     print("Episode", episode, "Step", step, "Return", episode_return, "State", state)
-            #     grid.show_policy(sarsa.policy)
-            #     sarsa.print_values()
+            # print("Task", task, "Episode", episode, "Step", step, "Return", episode_return, "State", state, "Action", grid.arrow(action))
+            # grid.show_policy(sarsa.policy)
+            # sarsa.print_values()
 
             if sarsa.c_map[new_state]['done'] or step == 500:
                 steps += step
                 list_returns.append(episode_return)
                 list_steps.append(steps)
-                # np.savetxt("tmp_data/s_%s_%d.csv" % (task, episode), sarsa_saves, fmt="%s", delimiter=",")
                 break
             else:
                 state, action = new_state, new_action
@@ -68,6 +69,9 @@ def do_task(sarsa, grid, task):
             old_mean = current_mean
 
 if __name__ == "__main__":
+    my_seed = 39 # 20 for non exploiting
+    np.random.seed(my_seed)
+    random.seed(my_seed * 2)
 
     print("-" * 100)
 
@@ -85,13 +89,12 @@ if __name__ == "__main__":
     grid.make_maps()
 
     possible_actions = grid.possible_actions
-    x_lim, y_lim = grid.x_lim, grid.y_lim
+    world = grid.world
     grid.list_of_maps.reverse()
 
     # Direct learning on final grid
     print("Direct learning on final grid")
-    grid.show_grid(grid.final_grid)
-    sarsa = SARSA(grid.final_grid, possible_actions, x_lim, y_lim)
+    sarsa = SARSA(grid.final_grid, possible_actions, world)
     Q, returns, episodes, steps = do_task(
         sarsa, grid, len(grid.list_of_maps) - 1)
     notrl_returns.append(returns)
@@ -105,8 +108,14 @@ if __name__ == "__main__":
     for task, current_map in enumerate(grid.list_of_maps):
         print("-" * 50)
         # creates SARSA instance
-        sarsa = SARSA(current_map, possible_actions, x_lim, y_lim, Q)
-        Q, returns, episodes, steps = do_task(sarsa, grid, task)
+        exploit = False if task == 0 else True
+        sarsa = SARSA(current_map, possible_actions, world, Q)
+        Q, returns, episodes, steps = do_task(sarsa, grid, task, exploit)
+
+        with open('test.csv', 'w') as f:
+            for key in Q.keys():
+                f.write("%s,%s\n" % (key, Q[key]))
+
         all_returns.append(returns)
         tot_counter = 0
         if task != 0:
@@ -121,13 +130,13 @@ if __name__ == "__main__":
     print("Direct Cumulative total of steps", notrl_steps[-1][-1])
 
     pre_avg_returns = [bn.move_mean(
-        sublist, window=5, min_count=1) for sublist in all_returns]
+        sublist, window=min(len(i) for i in all_returns), min_count=1) for sublist in all_returns]
     avg_returns = [item for sublist in pre_avg_returns for item in sublist]
     flat_returns = [item for sublist in all_returns for item in sublist]
     flat_steps = [item for sublist in all_steps for item in sublist]
 
     notrl_pre_avg_returns = [bn.move_mean(
-        sublist, window=5, min_count=1) for sublist in notrl_returns]
+        sublist, window=min(len(i) for i in all_returns), min_count=1) for sublist in notrl_returns]
     notrl_avg_returns = [
         item for sublist in notrl_pre_avg_returns for item in sublist]
     notrl_flat_returns = [
@@ -152,12 +161,11 @@ if __name__ == "__main__":
     a0.plot(x_episodes, notrl_avg_returns, label="direct averaged return",
             color='#2678b2', linestyle='-', linewidth=1)  # 2678b2
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
-    a0.set_aspect(aspect=500)
+    # a0.set_aspect(aspect=500)
     plt.xlabel("Steps")
-
     plt.ylabel("Return")
     plt.legend(loc="lower right")
-    plt.axis([None, None, -20, 1])
+    plt.axis([None, None, -12, 1])
     plt.title("Incremental Transfer from Source to Target")
-    plt.savefig("filename", cmap='gray')
+    plt.savefig('6by6.eps', format='eps', dpi=1000)
     plt.show()
