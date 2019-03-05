@@ -167,5 +167,5 @@ if __name__ == "__main__":
     plt.legend(loc="lower right")
     plt.axis([None, None, -12, 1])
     plt.title("Incremental Transfer from Source to Target")
-    plt.savefig('6by6.eps', format='eps', dpi=1000)
+    plt.savefig('9by9.eps', format='eps', dpi=1000)
     plt.show()
