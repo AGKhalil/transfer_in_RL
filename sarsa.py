@@ -27,7 +27,7 @@ class SARSA:
         y_lim (TYPE): grid y-length
     """
 
-    def __init__(self, c_map, possible_actions, x_lim, y_lim, Q=None):
+    def __init__(self, c_map, possible_actions, world, Q=None):
         """Initializes SARSA parameters
 
         Args:
@@ -41,15 +41,16 @@ class SARSA:
 
         self.c_map = c_map
         self.possible_actions = possible_actions
-        self.x_lim = x_lim
-        self.y_lim = y_lim
+        self.world = world
+        self.x_lim = self.world
+        self.y_lim = self.world
 
         if Q is None:
             Q = dict()
         self.Q = Q
         self.policy = dict()
 
-    def epsilon_greedy_random_action(self, state, step=0):
+    def epsilon_greedy_random_action(self, state, step=0, exploit=False):
         """Chooses action based on a greedy policy, but allows for
         exploration by a 1 - epsilon probability.
 
@@ -59,8 +60,10 @@ class SARSA:
         Returns:
             TYPE: action to be taken
         """
-        # epsilon = 1.0 / np.sqrt(step + 1)
-        epsilon = 0.5
+        if self.world == 4 or exploit:
+            epsilon = 0.1
+        elif self.world == 9:
+            epsilon = 1.0 / np.sqrt(step + 1)
         p = np.random.random()
         count = 0
         if p < epsilon:

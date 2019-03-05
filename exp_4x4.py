@@ -4,6 +4,7 @@ from grid_world import GridWorld
 from sarsa import SARSA
 import sys
 import numpy as np
+import random
 import itertools
 import matplotlib.pyplot as plt
 import bottleneck as bn
@@ -21,7 +22,6 @@ def do_task(sarsa, grid, task):
     plt_steps = 0
     returns = 0
     list_returns = []
-    sarsa_saves = []
     list_steps = []
 
     print("Currently at task ", task)
@@ -35,7 +35,6 @@ def do_task(sarsa, grid, task):
             episode_return += reward
             new_action = sarsa.epsilon_greedy_random_action(new_state)
             sarsa.update_Q(state, action, new_state, new_action, reward)
-            sarsa_saves.append([state, action, reward, new_state, new_action])
 
             # print("Episode", episode, "Step", step, "Return", episode_return)
 
@@ -43,7 +42,6 @@ def do_task(sarsa, grid, task):
                 steps += step
                 list_returns.append(episode_return)
                 list_steps.append(steps)
-                # np.savetxt("tmp_data/s_%s_%d.csv" % (task, episode), sarsa_saves, fmt="%s", delimiter=",")
                 break
             else:
                 state, action = new_state, new_action
@@ -65,6 +63,9 @@ def do_task(sarsa, grid, task):
             old_mean = current_mean
 
 if __name__ == "__main__":
+    my_seed = 20
+    np.random.seed(my_seed)
+    random.seed(my_seed*2)
 
     print("-" * 100)
 
@@ -83,12 +84,12 @@ if __name__ == "__main__":
     grid.make_maps()
 
     possible_actions = grid.possible_actions
-    x_lim, y_lim = grid.x_lim, grid.y_lim
+    world = grid.world
     grid.list_of_maps.reverse()
 
     # Direct learning on final grid
     print("Direct learning on final grid")
-    sarsa = SARSA(grid.final_grid, possible_actions, x_lim, y_lim)
+    sarsa = SARSA(grid.final_grid, possible_actions, world)
     Q, returns, episodes, steps = do_task(
         sarsa, grid, len(grid.list_of_maps) - 1)
     notrl_returns.append(returns)
@@ -106,7 +107,7 @@ if __name__ == "__main__":
     for task, current_map in enumerate(grid.list_of_maps):
         print("-" * 50)
         # creates SARSA instance
-        sarsa = SARSA(current_map, possible_actions, x_lim, y_lim, Q)
+        sarsa = SARSA(current_map, possible_actions, world, Q)
         Q, returns, episodes, steps = do_task(sarsa, grid, task)
         all_returns.append(returns)
         tot_counter = 0
@@ -131,17 +132,26 @@ if __name__ == "__main__":
     fig = plt.figure()
     a0 = fig.add_subplot(1, 1, 1)
     val = 0
-    for i in all_steps:
-        a0.axvline(x=i[-1], linestyle='--', color='grey')
+    for j, i in enumerate(all_steps):
+        if j == len(all_steps) - 1:
+            a0.axvline(x=i[-1], linestyle='--',
+                       color='#ccc5c6', label='task separator')
+        else:
+            a0.axvline(x=i[-1], linestyle='--', color='#ccc5c6')
     # a0.plot(flat_steps, flat_returns, label="Incremental Immediate Return")
-    a0.plot(flat_steps, avg_returns, label="IA")
+    a0.plot(flat_steps, avg_returns, label="incremental averaged return",
+            color='#fb7e28', linewidth=1, linestyle='-')
     x_episodes = [i + all_steps[0][-1] - notrl_steps[0][0]
                   for i in notrl_steps[0]]
     # a0.plot(x_episodes, notrl_flat_returns, label="Direct Immediate Return")
-    a0.plot(x_episodes, notrl_avg_returns, label="DA")
-    a0.set_aspect(aspect=75)
+    a0.plot(x_episodes, notrl_avg_returns, label="direct averaged return",
+            color='#2678b2', linestyle='-', linewidth=1)
+    # a0.set_aspect(aspect=50)
+    plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
     plt.xlabel("Steps")
     plt.ylabel("Return")
     plt.legend(loc="lower right")
+    plt.axis([None, None, -12, 1])
     plt.title("Incremental Transfer from Source to Target")
+    plt.savefig('4by4.eps', format='eps', dpi=1000)
     plt.show()
