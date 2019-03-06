@@ -1,7 +1,7 @@
 """Script for running experiment.
 """
 from grid_world import GridWorld
-from sarsa import SARSA
+from qlearn import QLearn
 import sys
 import numpy as np
 import random
@@ -11,7 +11,7 @@ import bottleneck as bn
 import csv
 
 
-def do_task(sarsa, grid, task, exploit=False):
+def do_task(qlearn, grid, task, exploit=False):
 
     # number of maximum episodes to run
     nEp = 1000
@@ -23,29 +23,29 @@ def do_task(sarsa, grid, task, exploit=False):
     plt_steps = 0
     returns = 0
     list_returns = []
-    sarsa_saves = []
+    qlearn_saves = []
     list_steps = []
 
     print("Currently at task ", task)
     for episode in range(1, nEp):
         episode_return = 0
         state = grid.reset_state()
-        action = sarsa.epsilon_greedy_random_action(state)
-        for step in range(500):
-            new_state, reward = sarsa.take_step(state, action)
+        for step in itertools.count():
+            action = qlearn.epsilon_greedy_random_action(state, step, exploit)
+            new_state, reward = qlearn.take_step(state, action)
             returns += reward
             episode_return += reward
-            new_action = sarsa.epsilon_greedy_random_action(
+            new_action = qlearn.epsilon_greedy_random_action(
                 new_state, step, exploit)
-            sarsa.update_Q(state, action, new_state, new_action, reward)
-            sarsa_saves.append([state, action, reward, new_state, new_action])
+            qlearn.update_Q(state, action, new_state, reward)
+            qlearn_saves.append([state, action, reward, new_state, new_action])
 
             # if step % 100 == 0:
-                # print("Task", task, "Episode", episode, "Step", step, "Return", episode_return, "State", state, "Action", grid.arrow(action))
-                # grid.show_policy(sarsa.policy)
-                # sarsa.print_values()
+            # print("Task", task, "Episode", episode, "Step", step, "Return", episode_return, "State", state, "Action", grid.arrow(action))
+            # grid.show_policy(qlearn.policy)
+            # qlearn.print_values()
 
-            if sarsa.c_map[new_state]['done'] or step == 500:
+            if qlearn.c_map[new_state]['done'] or step == 500:
                 steps += step
                 list_returns.append(episode_return)
                 list_steps.append(steps)
@@ -53,12 +53,12 @@ def do_task(sarsa, grid, task, exploit=False):
             else:
                 state, action = new_state, new_action
 
-        current_mean = abs(np.mean(list(np.sum(sarsa.Q.values()))))
+        current_mean = abs(np.mean(list(np.sum(qlearn.Q.values()))))
         if np.abs(old_mean - current_mean) < delta or episode == nEp - 1:
             print("Convergence at episode ", episode)
             print("Total of steps ", steps)
             print("Cumulative return", returns)
-            return sarsa.Q, list_returns, episode, list_steps
+            return qlearn.Q, list_returns, episode, list_steps
         else:
             old_mean = current_mean
 
@@ -88,9 +88,9 @@ if __name__ == "__main__":
 
     # Direct learning on final grid
     print("Direct learning on final grid")
-    sarsa = SARSA(grid.final_grid, possible_actions, world)
+    qlearn = QLearn(grid.final_grid, possible_actions, world)
     Q, returns, episodes, steps = do_task(
-        sarsa, grid, len(grid.list_of_maps) - 1)
+        qlearn, grid, len(grid.list_of_maps) - 1)
     notrl_returns.append(returns)
     notrl_steps.append(steps)
     notrl_tot_steps += steps[-1]
@@ -101,10 +101,10 @@ if __name__ == "__main__":
     Q = None
     for task, current_map in enumerate(grid.list_of_maps):
         print("-" * 50)
-        # creates SARSA instance
+        # creates QLearn instance
         exploit = False if task == 0 else True
-        sarsa = SARSA(current_map, possible_actions, world, Q)
-        Q, returns, episodes, steps = do_task(sarsa, grid, task, exploit)
+        qlearn = QLearn(current_map, possible_actions, world, Q)
+        Q, returns, episodes, steps = do_task(qlearn, grid, task, exploit)
 
         with open('test.csv', 'w') as f:
             for key in Q.keys():
@@ -138,6 +138,7 @@ if __name__ == "__main__":
     x_episodes = [i + all_steps[0][-1] - notrl_steps[0][0]
                   for i in notrl_steps[0]]
 
+    # plt.style.use('grayscale')
     fig = plt.figure()
     a0 = fig.add_subplot(1, 1, 1)
     val = 0
@@ -155,7 +156,7 @@ if __name__ == "__main__":
     plt.xlabel("Steps")
     plt.ylabel("Return")
     plt.legend(loc="lower right")
-    plt.axis([None, None, -15, 1])
+    plt.axis([None, None, -60, 5])
     plt.title("Incremental Transfer from Source to Target")
-    plt.savefig('sarsa_plots/9by9_s%s.eps' % my_seed, format='eps', dpi=1000)
+    plt.savefig('qlearn_plots/9by9_s%s.eps' % my_seed, format='eps', dpi=1000)
     plt.show()

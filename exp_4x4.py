@@ -33,7 +33,8 @@ def do_task(sarsa, grid, task, exploit=False):
             new_state, reward = sarsa.take_step(state, action)
             returns += reward
             episode_return += reward
-            new_action = sarsa.epsilon_greedy_random_action(new_state, step, exploit)
+            new_action = sarsa.epsilon_greedy_random_action(
+                new_state, step, exploit)
             sarsa.update_Q(state, action, new_state, new_action, reward)
 
             # print("Episode", episode, "Step", step, "Return", episode_return)
@@ -51,21 +52,14 @@ def do_task(sarsa, grid, task, exploit=False):
             print("Convergence at episode ", episode)
             print("Total of steps ", steps)
             print("Cumulative return", returns)
-            # print results to terminal
-            # print("Environment Map")
-            # grid.show_grid(sarsa.c_map)
-            # print("Environment Values")
-            # sarsa.print_values()
-            # print("Environment Policy")
-            # grid.show_policy(sarsa.policy)
             return sarsa.Q, list_returns, episode, list_steps
         else:
             old_mean = current_mean
 
 if __name__ == "__main__":
-    # my_seed = 123 # non-canyon seed: 20, 40, 56, 12, 123; canyon seeds: 12, 20, 50, 90, 63, 129
-    # np.random.seed(my_seed)
-    # random.seed(my_seed*2)
+    my_seed = 129  # non-canyon seed: 20, 40, 54, 12, 123; canyon seeds: 12, 20, 50, 90, 63, 129
+    np.random.seed(my_seed)
+    random.seed(my_seed * 2)
 
     print("-" * 100)
 
@@ -139,23 +133,22 @@ if __name__ == "__main__":
                        color='#ccc5c6', label='task separator')
         else:
             a0.axvline(x=i[-1], linestyle='--', color='#ccc5c6')
-    # a0.plot(flat_steps, flat_returns, label="Incremental Immediate Return")
     a0.plot(flat_steps, avg_returns, label="incremental averaged return",
             color='#fb7e28', linewidth=1, linestyle='-')
     x_episodes = [i + all_steps[0][-1] - notrl_steps[0][0]
                   for i in notrl_steps[0]]
-    # a0.plot(x_episodes, notrl_flat_returns, label="Direct Immediate Return")
     a0.plot(x_episodes, notrl_avg_returns, label="direct averaged return",
             color='#2678b2', linestyle='-', linewidth=1)
-    # a0.set_aspect(aspect=50)
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
     plt.xlabel("Steps")
     plt.ylabel("Return")
     plt.legend(loc="lower right")
-    plt.axis([None, None, -12, 1])
+    plt.axis([None, None, -15, 1])
     plt.title("Incremental Transfer from Source to Target")
-    # if canyon:
-    #     plt.savefig('4by4_canyon_s%s.eps' % my_seed, format='eps', dpi=1000)
-    # else:
-    #     plt.savefig('4by4_nocanyon_s%s.eps' % my_seed, format='eps', dpi=1000)
+    if canyon:
+        plt.savefig('sarsa_plots/4by4_canyon_s%s.eps' %
+                    my_seed, format='eps', dpi=1000)
+    else:
+        plt.savefig('sarsa_plots/4by4_nocanyon_s%s.eps' %
+                    my_seed, format='eps', dpi=1000)
     plt.show()

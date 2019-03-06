@@ -1,20 +1,19 @@
 """Script for running experiment.
 """
 from grid_world import GridWorld
-from sarsa import SARSA
+from qlearn import QLearn
 import sys
 import numpy as np
 import random
 import itertools
 import matplotlib.pyplot as plt
 import bottleneck as bn
-import csv
 
 
-def do_task(sarsa, grid, task, exploit=False):
+def do_task(qlearn, grid, task, exploit=False):
 
     # number of maximum episodes to run
-    nEp = 1000
+    nEp = 200
 
     # initialize algorithm parameters
     old_mean = 0
@@ -23,47 +22,42 @@ def do_task(sarsa, grid, task, exploit=False):
     plt_steps = 0
     returns = 0
     list_returns = []
-    sarsa_saves = []
     list_steps = []
 
     print("Currently at task ", task)
     for episode in range(1, nEp):
         episode_return = 0
         state = grid.reset_state()
-        action = sarsa.epsilon_greedy_random_action(state)
-        for step in range(500):
-            new_state, reward = sarsa.take_step(state, action)
+        for step in itertools.count():
+            action = qlearn.epsilon_greedy_random_action(state, step, exploit)
+            new_state, reward = qlearn.take_step(state, action)
             returns += reward
             episode_return += reward
-            new_action = sarsa.epsilon_greedy_random_action(
+            new_action = qlearn.epsilon_greedy_random_action(
                 new_state, step, exploit)
-            sarsa.update_Q(state, action, new_state, new_action, reward)
-            sarsa_saves.append([state, action, reward, new_state, new_action])
+            qlearn.update_Q(state, action, new_state, reward)
 
-            # if step % 100 == 0:
-                # print("Task", task, "Episode", episode, "Step", step, "Return", episode_return, "State", state, "Action", grid.arrow(action))
-                # grid.show_policy(sarsa.policy)
-                # sarsa.print_values()
+            # print("Episode", episode, "Step", step, "Return", episode_return)
 
-            if sarsa.c_map[new_state]['done'] or step == 500:
+            if qlearn.c_map[new_state]['done'] or step == 200:
                 steps += step
                 list_returns.append(episode_return)
                 list_steps.append(steps)
                 break
             else:
-                state, action = new_state, new_action
+                state = new_state
 
-        current_mean = abs(np.mean(list(np.sum(sarsa.Q.values()))))
+        current_mean = abs(np.mean(list(np.sum(qlearn.Q.values()))))
         if np.abs(old_mean - current_mean) < delta or episode == nEp - 1:
             print("Convergence at episode ", episode)
             print("Total of steps ", steps)
             print("Cumulative return", returns)
-            return sarsa.Q, list_returns, episode, list_steps
+            return qlearn.Q, list_returns, episode, list_steps
         else:
             old_mean = current_mean
 
 if __name__ == "__main__":
-    my_seed = 50  # exploiting: 39, 20, 19, 811, 50
+    my_seed = 129  # non-canyon seed: 20, 40, 56, 12, 123; canyon seeds: 12, 20, 50, 90, 63, 129
     np.random.seed(my_seed)
     random.seed(my_seed * 2)
 
@@ -79,7 +73,8 @@ if __name__ == "__main__":
     notrl_steps = []
 
     # create grid-world instance
-    grid = GridWorld(9)
+    canyon = True
+    grid = GridWorld(4, canyon)
     grid.make_maps()
 
     possible_actions = grid.possible_actions
@@ -88,28 +83,28 @@ if __name__ == "__main__":
 
     # Direct learning on final grid
     print("Direct learning on final grid")
-    sarsa = SARSA(grid.final_grid, possible_actions, world)
+    qlearn = QLearn(grid.final_grid, possible_actions, world)
+    print("qlearn")
     Q, returns, episodes, steps = do_task(
-        sarsa, grid, len(grid.list_of_maps) - 1)
+        qlearn, grid, len(grid.list_of_maps) - 1)
     notrl_returns.append(returns)
     notrl_steps.append(steps)
     notrl_tot_steps += steps[-1]
     print("-" * 80)
 
     # Incremental transfer learning
-    print("Incremental transfer learning")
+    if canyon:
+        canyon_str = "(CANYON)"
+    else:
+        canyon_str = "(NO CANYON)"
+    print("Incremental transfer learning", canyon_str)
     Q = None
     for task, current_map in enumerate(grid.list_of_maps):
         print("-" * 50)
-        # creates SARSA instance
+        # creates qlearn instance
         exploit = False if task == 0 else True
-        sarsa = SARSA(current_map, possible_actions, world, Q)
-        Q, returns, episodes, steps = do_task(sarsa, grid, task, exploit)
-
-        with open('test.csv', 'w') as f:
-            for key in Q.keys():
-                f.write("%s,%s\n" % (key, Q[key]))
-
+        qlearn = QLearn(current_map, possible_actions, world, Q)
+        Q, returns, episodes, steps = do_task(qlearn, grid, task, exploit)
         all_returns.append(returns)
         tot_counter = 0
         if task != 0:
@@ -123,20 +118,12 @@ if __name__ == "__main__":
           all_steps[-1][-1] - all_steps[0][-1])
     print("Direct Cumulative total of steps", notrl_steps[-1][-1])
 
-    pre_avg_returns = [bn.move_mean(
-        sublist, window=min(len(i) for i in all_returns), min_count=1) for sublist in all_returns]
-    avg_returns = [item for sublist in pre_avg_returns for item in sublist]
     flat_returns = [item for sublist in all_returns for item in sublist]
     flat_steps = [item for sublist in all_steps for item in sublist]
-
-    notrl_pre_avg_returns = [bn.move_mean(
-        sublist, window=min(len(i) for i in all_returns), min_count=1) for sublist in notrl_returns]
-    notrl_avg_returns = [
-        item for sublist in notrl_pre_avg_returns for item in sublist]
+    avg_returns = bn.move_mean(flat_returns, window=5, min_count=1)
     notrl_flat_returns = [
         item for sublist in notrl_returns for item in sublist]
-    x_episodes = [i + all_steps[0][-1] - notrl_steps[0][0]
-                  for i in notrl_steps[0]]
+    notrl_avg_returns = bn.move_mean(notrl_flat_returns, window=5, min_count=1)
 
     fig = plt.figure()
     a0 = fig.add_subplot(1, 1, 1)
@@ -149,6 +136,8 @@ if __name__ == "__main__":
             a0.axvline(x=i[-1], linestyle='--', color='#ccc5c6')
     a0.plot(flat_steps, avg_returns, label="incremental averaged return",
             color='#fb7e28', linewidth=1, linestyle='-')
+    x_episodes = [i + all_steps[0][-1] - notrl_steps[0][0]
+                  for i in notrl_steps[0]]
     a0.plot(x_episodes, notrl_avg_returns, label="direct averaged return",
             color='#2678b2', linestyle='-', linewidth=1)
     plt.ticklabel_format(style='sci', axis='x', scilimits=(0, 0))
@@ -157,5 +146,8 @@ if __name__ == "__main__":
     plt.legend(loc="lower right")
     plt.axis([None, None, -15, 1])
     plt.title("Incremental Transfer from Source to Target")
-    plt.savefig('sarsa_plots/9by9_s%s.eps' % my_seed, format='eps', dpi=1000)
+    if canyon:
+        plt.savefig('qlearn_plots/4by4_canyon_s%s.eps' % my_seed, format='eps', dpi=1000)
+    else:
+        plt.savefig('qlearn_plots/4by4_nocanyon_s%s.eps' % my_seed, format='eps', dpi=1000)
     plt.show()
