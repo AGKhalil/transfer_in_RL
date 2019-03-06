@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import bottleneck as bn
 
 
-def do_task(sarsa, grid, task):
+def do_task(sarsa, grid, task, exploit=False):
 
     # number of maximum episodes to run
     nEp = 200
@@ -33,12 +33,12 @@ def do_task(sarsa, grid, task):
             new_state, reward = sarsa.take_step(state, action)
             returns += reward
             episode_return += reward
-            new_action = sarsa.epsilon_greedy_random_action(new_state)
+            new_action = sarsa.epsilon_greedy_random_action(new_state, step, exploit)
             sarsa.update_Q(state, action, new_state, new_action, reward)
 
             # print("Episode", episode, "Step", step, "Return", episode_return)
 
-            if sarsa.c_map[new_state]['done']:
+            if sarsa.c_map[new_state]['done'] or step == 500:
                 steps += step
                 list_returns.append(episode_return)
                 list_steps.append(steps)
@@ -47,7 +47,7 @@ def do_task(sarsa, grid, task):
                 state, action = new_state, new_action
 
         current_mean = abs(np.mean(list(np.sum(sarsa.Q.values()))))
-        if np.abs(old_mean - current_mean) < delta:
+        if np.abs(old_mean - current_mean) < delta or episode == nEp - 1:
             print("Convergence at episode ", episode)
             print("Total of steps ", steps)
             print("Cumulative return", returns)
@@ -63,9 +63,9 @@ def do_task(sarsa, grid, task):
             old_mean = current_mean
 
 if __name__ == "__main__":
-    my_seed = 129 # non-canyon seed: 20, 40, 56, 12, 123; canyon seeds: 12, 20, 50, 90, 63, 129
-    np.random.seed(my_seed)
-    random.seed(my_seed*2)
+    # my_seed = 123 # non-canyon seed: 20, 40, 56, 12, 123; canyon seeds: 12, 20, 50, 90, 63, 129
+    # np.random.seed(my_seed)
+    # random.seed(my_seed*2)
 
     print("-" * 100)
 
@@ -90,6 +90,7 @@ if __name__ == "__main__":
     # Direct learning on final grid
     print("Direct learning on final grid")
     sarsa = SARSA(grid.final_grid, possible_actions, world)
+    print("sarsa")
     Q, returns, episodes, steps = do_task(
         sarsa, grid, len(grid.list_of_maps) - 1)
     notrl_returns.append(returns)
@@ -107,8 +108,9 @@ if __name__ == "__main__":
     for task, current_map in enumerate(grid.list_of_maps):
         print("-" * 50)
         # creates SARSA instance
+        exploit = False if task == 0 else True
         sarsa = SARSA(current_map, possible_actions, world, Q)
-        Q, returns, episodes, steps = do_task(sarsa, grid, task)
+        Q, returns, episodes, steps = do_task(sarsa, grid, task, exploit)
         all_returns.append(returns)
         tot_counter = 0
         if task != 0:
@@ -153,8 +155,8 @@ if __name__ == "__main__":
     plt.legend(loc="lower right")
     plt.axis([None, None, -12, 1])
     plt.title("Incremental Transfer from Source to Target")
-    if canyon:
-        plt.savefig('4by4_canyon_s%s.eps' % my_seed, format='eps', dpi=1000)
-    else:
-        plt.savefig('4by4_nocanyon_s%s.eps' % my_seed, format='eps', dpi=1000)
+    # if canyon:
+    #     plt.savefig('4by4_canyon_s%s.eps' % my_seed, format='eps', dpi=1000)
+    # else:
+    #     plt.savefig('4by4_nocanyon_s%s.eps' % my_seed, format='eps', dpi=1000)
     plt.show()

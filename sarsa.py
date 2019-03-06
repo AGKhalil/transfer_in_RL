@@ -60,9 +60,9 @@ class SARSA:
         Returns:
             TYPE: action to be taken
         """
-        if self.world == 4 or exploit:
-            epsilon = 0.1
-        elif self.world == 9:
+        if exploit:
+            epsilon = 0.0
+        else:
             epsilon = 1.0 / np.sqrt(step + 1)
         p = np.random.random()
         count = 0
@@ -94,7 +94,7 @@ class SARSA:
         q = self.Q.get((state, action), 0.0)
         self.Q[state, action] = q + self.alpha * \
             (reward + self.discount_factor *
-             self.Q.get((new_state, action), 0.0) - q)
+             self.Q.get((new_state, new_action), 0.0) - q)
 
     def take_step(self, state, action):
         """Agent performs action to transition to next state on grid-world.
