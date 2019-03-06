@@ -69,7 +69,7 @@ def do_task(sarsa, grid, task, exploit=False):
             old_mean = current_mean
 
 if __name__ == "__main__":
-    my_seed = 39 # 20 for non exploiting
+    my_seed = 50 # exploiting: 39, 20, 19, 811, 50
     np.random.seed(my_seed)
     random.seed(my_seed * 2)
 

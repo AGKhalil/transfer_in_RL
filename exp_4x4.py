@@ -63,7 +63,7 @@ def do_task(sarsa, grid, task):
             old_mean = current_mean
 
 if __name__ == "__main__":
-    my_seed = 20
+    my_seed = 123 # non-canyon seed: 20, 40, 56, 12, 123; canyon seeds: 12, 20, 50, 90, 63, 129
     np.random.seed(my_seed)
     random.seed(my_seed*2)
 
