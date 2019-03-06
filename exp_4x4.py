@@ -38,7 +38,7 @@ def do_task(sarsa, grid, task, exploit=False):
 
             # print("Episode", episode, "Step", step, "Return", episode_return)
 
-            if sarsa.c_map[new_state]['done'] or step == 500:
+            if sarsa.c_map[new_state]['done'] or step == 200:
                 steps += step
                 list_returns.append(episode_return)
                 list_steps.append(steps)
@@ -63,9 +63,9 @@ def do_task(sarsa, grid, task, exploit=False):
             old_mean = current_mean
 
 if __name__ == "__main__":
-    my_seed = 123 # non-canyon seed: 20, 40, 56, 12, 123; canyon seeds: 12, 20, 50, 90, 63, 129
-    np.random.seed(my_seed)
-    random.seed(my_seed*2)
+    # my_seed = 123 # non-canyon seed: 20, 40, 56, 12, 123; canyon seeds: 12, 20, 50, 90, 63, 129
+    # np.random.seed(my_seed)
+    # random.seed(my_seed*2)
 
     print("-" * 100)
 
@@ -154,8 +154,8 @@ if __name__ == "__main__":
     plt.legend(loc="lower right")
     plt.axis([None, None, -12, 1])
     plt.title("Incremental Transfer from Source to Target")
-    if canyon:
-        plt.savefig('4by4_canyon_s%s.eps' % my_seed, format='eps', dpi=1000)
-    else:
-        plt.savefig('4by4_nocanyon_s%s.eps' % my_seed, format='eps', dpi=1000)
+    # if canyon:
+    #     plt.savefig('4by4_canyon_s%s.eps' % my_seed, format='eps', dpi=1000)
+    # else:
+    #     plt.savefig('4by4_nocanyon_s%s.eps' % my_seed, format='eps', dpi=1000)
     plt.show()
