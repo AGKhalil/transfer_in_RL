@@ -69,7 +69,7 @@ def do_task(sarsa, grid, task, exploit=False):
             old_mean = current_mean
 
 if __name__ == "__main__":
-    my_seed = 50 # exploiting: 39, 20, 19, 811, 50
+    my_seed = 811 # exploiting: 39, 20, 19, 811, 50
     np.random.seed(my_seed)
     random.seed(my_seed * 2)
 
@@ -167,5 +167,5 @@ if __name__ == "__main__":
     plt.legend(loc="lower right")
     plt.axis([None, None, -12, 1])
     plt.title("Incremental Transfer from Source to Target")
-    plt.savefig('9by9.eps', format='eps', dpi=1000)
+    plt.savefig('9by9_s%s.eps' % my_seed, format='eps', dpi=1000)
     plt.show()

@@ -63,7 +63,7 @@ def do_task(sarsa, grid, task):
             old_mean = current_mean
 
 if __name__ == "__main__":
-    my_seed = 123 # non-canyon seed: 20, 40, 56, 12, 123; canyon seeds: 12, 20, 50, 90, 63, 129
+    my_seed = 129 # non-canyon seed: 20, 40, 56, 12, 123; canyon seeds: 12, 20, 50, 90, 63, 129
     np.random.seed(my_seed)
     random.seed(my_seed*2)
 
@@ -79,7 +79,7 @@ if __name__ == "__main__":
     notrl_steps = []
 
     # create grid-world instance
-    canyon = False
+    canyon = True
     grid = GridWorld(4, canyon)
     grid.make_maps()
 
@@ -153,5 +153,8 @@ if __name__ == "__main__":
     plt.legend(loc="lower right")
     plt.axis([None, None, -12, 1])
     plt.title("Incremental Transfer from Source to Target")
-    plt.savefig('4by4.eps', format='eps', dpi=1000)
+    if canyon:
+        plt.savefig('4by4_canyon_s%s.eps' % my_seed, format='eps', dpi=1000)
+    else:
+        plt.savefig('4by4_nocanyon_s%s.eps' % my_seed, format='eps', dpi=1000)
     plt.show()
