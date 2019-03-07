@@ -23,6 +23,7 @@ def do_task(qlearn, grid, task, exploit=False):
     returns = 0
     list_returns = []
     list_steps = []
+    qlearn_saves = []
 
     print("Currently at task ", task)
     for episode in range(1, nEp):
@@ -36,6 +37,7 @@ def do_task(qlearn, grid, task, exploit=False):
             new_action = qlearn.epsilon_greedy_random_action(
                 new_state, step, exploit)
             qlearn.update_Q(state, action, new_state, reward)
+            qlearn_saves.append([state, action, reward, new_state])
 
             # print("Episode", episode, "Step", step, "Return", episode_return)
 
@@ -43,6 +45,7 @@ def do_task(qlearn, grid, task, exploit=False):
                 steps += step
                 list_returns.append(episode_return)
                 list_steps.append(steps)
+                np.savetxt("tmp_data/w4x4/s_%s_%d.csv" % (task, episode), qlearn_saves, fmt="%s", delimiter=",")
                 break
             else:
                 state = new_state

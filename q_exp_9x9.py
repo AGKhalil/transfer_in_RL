@@ -38,7 +38,7 @@ def do_task(qlearn, grid, task, exploit=False):
             new_action = qlearn.epsilon_greedy_random_action(
                 new_state, step, exploit)
             qlearn.update_Q(state, action, new_state, reward)
-            qlearn_saves.append([state, action, reward, new_state, new_action])
+            qlearn_saves.append([state, action, reward, new_state])
 
             # if step % 100 == 0:
             # print("Task", task, "Episode", episode, "Step", step, "Return", episode_return, "State", state, "Action", grid.arrow(action))
@@ -49,6 +49,7 @@ def do_task(qlearn, grid, task, exploit=False):
                 steps += step
                 list_returns.append(episode_return)
                 list_steps.append(steps)
+                np.savetxt("tmp_data/w9x9/s_%s_%d.csv" % (task, episode), qlearn_saves, fmt="%s", delimiter=",")
                 break
             else:
                 state, action = new_state, new_action
@@ -63,7 +64,7 @@ def do_task(qlearn, grid, task, exploit=False):
             old_mean = current_mean
 
 if __name__ == "__main__":
-    my_seed = 50  # exploiting: 39, 20, 19, 811, 50
+    my_seed = 39  # exploiting: 39, 20, 19, 811, 50
     np.random.seed(my_seed)
     random.seed(my_seed * 2)
 
