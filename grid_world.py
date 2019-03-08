@@ -413,7 +413,6 @@ class GridWorld:
                 # print(value)
                 if 1 in value['actions']:
                     barrier_cells.append(key)
-            self.show_grid(self.diff_grid)
 
             # randomizes the barrier cells
             # for i, j in enumerate(barrier_cells):
